@@ -51,6 +51,8 @@ h2 {
   overflow:auto;
   padding:10px 0px;
   clear:both;
+  text-align: justify;
+  text-justify: inter-word;
 }
 
 .container1 {
