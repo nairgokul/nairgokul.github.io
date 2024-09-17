@@ -1,11 +1,11 @@
 nav ul li a:link, nav ul li a:visited {
   background-color: #ADD9F4;
   color: #000000;
-  padding: 14px 25px;
+  padding: 5px 5px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font: small-caps 18px Arial, sans-serif;
+  font: small-caps 14px Arial, sans-serif;
 }
 
 nav ul li a:hover {
@@ -91,7 +91,7 @@ h1 {
   nav ul li a:link, nav ul li a:visited {
     background-color: #ADD9F4;
     color: #000000;
-    padding: 14px 25px;
+    padding: 5px 5px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
