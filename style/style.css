@@ -1,15 +1,11 @@
-p a:visited{
-  color: #551A8B;
-}
-
-nav ul li a:link, a:visited {
+nav ul li a:link, nav ul li a:visited {
   background-color: #ADD9F4;
   color: #000000;
-  padding: 5px 5px;
+  padding: 14px 25px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font: small-caps 14px Arial, sans-serif;
+  font: small-caps 18px Arial, sans-serif;
 }
 
 nav ul li a:hover {
@@ -92,14 +88,10 @@ h1 {
     margin: 0 auto;
   }
 
-  p a:visited{
-    color: #551A8B;
-  }
-
-  nav ul li a:link, a:visited {
+  nav ul li a:link, nav ul li a:visited {
     background-color: #ADD9F4;
     color: #000000;
-    padding: 5px 5px;
+    padding: 14px 25px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
@@ -131,12 +123,8 @@ h1 {
     width: 1000px;
     margin: 0 auto;
   }
-  
-  p a:visited{
-    color: #551A8B;
-  }
 
-  nav ul li a:link, a:visited {
+  nav ul li a:link, nav ul li a:visited {
     background-color: #ADD9F4;
     color: #000000;
     padding: 14px 25px;
