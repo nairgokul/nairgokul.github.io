@@ -1,3 +1,7 @@
+p a:visited{
+  color: #551A8B;
+}
+
 nav ul li a:link, a:visited {
   background-color: #ADD9F4;
   color: #000000;
@@ -88,6 +92,10 @@ h1 {
     margin: 0 auto;
   }
 
+  p a:visited{
+    color: #551A8B;
+  }
+
   nav ul li a:link, a:visited {
     background-color: #ADD9F4;
     color: #000000;
@@ -122,6 +130,10 @@ h1 {
   .wrapper{
     width: 1000px;
     margin: 0 auto;
+  }
+  
+  p a:visited{
+    color: #551A8B;
   }
 
   nav ul li a:link, a:visited {
