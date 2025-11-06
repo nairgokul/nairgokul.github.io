@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 21.12) (preloaded format=pdflatex 2022.1.24)  5 MAY 2025 13:14
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 21.12) (preloaded format=pdflatex 2022.1.24)  5 NOV 2025 13:49
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -191,23 +191,23 @@ LaTeX Font Info:    External font `cmex10' loaded for size
  [1
 
 {C:/Users/nairg/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
-Overfull \hbox (0.89548pt too wide) in paragraph at lines 121--122
+Overfull \hbox (0.89548pt too wide) in paragraph at lines 130--131
 []\OT1/cmr/m/sl/10 Fission-fusion dy-nam-ics and group-size-dependent com-po-si-tion in het-ero-ge-neous
  []
 
 [2] [3] [4] ) 
 Here is how much of TeX's memory you used:
- 7409 strings out of 478659
- 119005 string characters out of 2845920
+ 7410 strings out of 478659
+ 119011 string characters out of 2845920
  419834 words of memory out of 3000000
  25462 multiletter control sequences out of 15000+600000
  406144 words of font info for 36 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 60i,8n,63p,389b,423s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,8n,63p,389b,425s stack positions out of 5000i,500n,10000p,200000b,80000s
  <C:\Users\nairg\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1000.pk><C:/Users/nairg/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/nairg/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Users/nairg/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/nairg/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/nairg/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/nairg/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsl10.pfb><C:/Users/nairg/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/nairg/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on GokulNairCV.pdf (4 pages, 140283 bytes).
+Output written on GokulNairCV.pdf (4 pages, 141623 bytes).
 PDF statistics:
- 81 PDF objects out of 1000 (max. 8388607)
- 11 named destinations out of 1000 (max. 500000)
+ 82 PDF objects out of 1000 (max. 8388607)
+ 12 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
