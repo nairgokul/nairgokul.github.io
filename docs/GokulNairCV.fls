@@ -1,7 +1,7 @@
 PWD c:\Users\nairg\OneDrive\Documents\GitHub\nairgokul.github.io\docs
 INPUT C:\Users\nairg\AppData\Local\MiKTeX\miktex\data\le\pdftex\pdflatex.fmt
 INPUT c:\Users\nairg\OneDrive\Documents\GitHub\nairgokul.github.io\docs\GokulNairCV.tex
-OUTPUT GokulNairCV.log
+OUTPUT c:\Users\nairg\OneDrive\Documents\GitHub\nairgokul.github.io\docs\%OUTDIR%\GokulNairCV.log
 INPUT .\res.cls
 INPUT .\res.cls
 INPUT res.cls
@@ -339,9 +339,9 @@ INPUT C:\Users\nairg\AppData\Local\Programs\MiKTeX\tex\latex\l3backend\l3backend
 INPUT C:\Users\nairg\AppData\Local\Programs\MiKTeX\tex\latex\l3backend\l3backend-pdftex.def
 INPUT C:\Users\nairg\AppData\Local\Programs\MiKTeX\tex\latex\l3backend\l3backend-pdftex.def
 INPUT C:\Users\nairg\AppData\Local\Programs\MiKTeX\tex\latex\l3backend\l3backend-pdftex.def
-INPUT .\GokulNairCV.aux
-INPUT GokulNairCV.aux
-INPUT GokulNairCV.aux
+INPUT c:\Users\nairg\OneDrive\Documents\GitHub\nairgokul.github.io\docs\%OUTDIR%\GokulNairCV.aux
+INPUT c:\Users\nairg\OneDrive\Documents\GitHub\nairgokul.github.io\docs\%OUTDIR%\GokulNairCV.aux
+INPUT c:\Users\nairg\OneDrive\Documents\GitHub\nairgokul.github.io\docs\%OUTDIR%\GokulNairCV.aux
 INPUT C:\Users\nairg\AppData\Local\Programs\MiKTeX\tex\latex\hyperref\nameref.sty
 INPUT C:\Users\nairg\AppData\Local\Programs\MiKTeX\tex\latex\hyperref\nameref.sty
 INPUT C:\Users\nairg\AppData\Local\Programs\MiKTeX\tex\latex\hyperref\nameref.sty
