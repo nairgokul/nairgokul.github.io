@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="AI consulting office hours, news, and resources for the University of Michigan mathematics community." />
+    <title>AI Consulting for Michigan Mathematics</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="site-content.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body data-page="home">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="site-name" href="index.html">AI Consulting for Mathematics</a>
+        <button class="nav-button" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+        <nav id="nav" aria-label="Main navigation">
+          <a class="active" href="index.html">Home</a>
+          <a href="resources.html">Resources</a>
+          <a href="events.html">Events &amp; recordings</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="wrap home-main">
+      <section class="intro" aria-labelledby="intro-title">
+        <p class="label">AI consultations</p>
+        <h1 id="intro-title">AI-related resources for research and teaching</h1>
+        <p>Use this site to find office hours, schedule a meeting, check upcoming events, and browse recommended resources.</p>
+      </section>
+
+      <div class="home-grid">
+        <section class="panel office-panel" aria-labelledby="office-title">
+          <div class="panel-heading">
+            <h2 id="office-title">Office hours</h2>
+            <span class="term" id="term-label"></span>
+          </div>
+          <div id="office-hours"></div>
+          <p class="office-note" id="appointment-note"></p>
+          <div class="button-row">
+            <a class="button" data-appointment-link href="#">Make an appointment</a>
+            <a class="secondary-link" data-email-link href="#">Email me</a>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="news-title">
+          <div class="panel-heading">
+            <h2 id="news-title">News</h2>
+            <a href="resources.html">All resources</a>
+          </div>
+          <div id="news-list" class="news-list"></div>
+        </section>
+      </div>
+
+      <section class="link-row" aria-label="Explore the site">
+        <a href="resources.html"><strong>Resources</strong><span>Tools, research, teaching, and responsible use</span></a>
+        <a href="events.html"><strong>Events &amp; recordings</strong><span>Workshops, meetings, coffee hours, and videos</span></a>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span id="consultant-name"></span>
+        <span>University of Michigan Department of Mathematics</span>
+        <span>This website was created with assistance from OpenAI's ChatGPT.</span>
+      </div>
+    </footer>
+  </body>
+</html>

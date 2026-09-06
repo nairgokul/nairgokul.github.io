@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="AI tools and guidance for mathematical research and teaching." />
+    <title>Resources · AI Consulting for Mathematics</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="site-content.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body data-page="resources">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="site-name" href="index.html">AI Consulting for Mathematics</a>
+        <button class="nav-button" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+        <nav id="nav" aria-label="Main navigation">
+          <a href="index.html">Home</a>
+          <a class="active" href="resources.html">Resources</a>
+          <a href="events.html">Events &amp; recordings</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page-main">
+      <header class="page-heading">
+        <p class="label">Resources</p>
+        <h1>AI tools and guidance</h1>
+        <p>Selected starting points for the mathematics community. Links marked U-M are maintained by the university.</p>
+      </header>
+
+      <div class="resource-sections resource-sections--tools">
+        <section aria-labelledby="tools-title">
+          <h2 id="tools-title">Tools available through U-M</h2>
+          <div id="tools-resources" class="simple-list"></div>
+        </section>
+        <section aria-labelledby="umgpt-title">
+          <h2 id="umgpt-title">U-M GPT</h2>
+          <div class="pros-cons">
+            <div><h3>Advantages</h3><ul id="umgpt-advantages"></ul></div>
+            <div><h3>Disadvantages</h3><ul id="umgpt-disadvantages"></ul></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="content-section" aria-labelledby="pricing-title">
+        <h2 id="pricing-title">Paid AI tools and pricing</h2>
+        <p>The two most common AI subscriptions are OpenAI's ChatGPT and Anthropic's Claude. Tiers 3 and 4 have 10x and 20x the quotas of Tier 2, respectively.</p>
+        <div class="table-wrap"><table><thead><tr><th>Vendor</th><th>Product</th><th>Free</th><th>$8/month</th><th>$20/month</th><th>$100/month</th><th>$200/month</th></tr></thead><tbody id="pricing-body"></tbody></table></div>
+      </section>
+
+      <section class="content-section" aria-labelledby="options-title">
+        <h2 id="options-title">Other options for faculty</h2>
+        <p>These programs provide a PI with access to premium AI tools that can be shared with students and postdocs in their group.</p>
+        <div id="researcher-options" class="simple-list"></div>
+      </section>
+
+      <section class="content-section" aria-labelledby="purchasing-title">
+        <h2 id="purchasing-title">Purchasing AI using grant funds</h2>
+        <p>All AI purchases must be made through the university, not with personal funds, and coordinated with LSA Technology Services.</p>
+        <ol class="steps">
+          <li><span>1</span><div><h3>Contact LSA Technology Services</h3><p><a href="https://lsa.umich.edu/technology-services/help-support.html">Reach out to Technology Services</a> or use the <a href="https://teamdynamix.umich.edu/TDClient/47/LSAPortal/Requests/ServiceOffering/382/LSA-TS-SpecialtySoftwarePurchases-Support/Request">Software Purchase Form</a>.</p></div></li>
+          <li><span>2</span><div><h3>Provide purchase information</h3><p>List the software and licenses to purchase and the funding shortcode.</p></div></li>
+          <li><span>3</span><div><h3>Assess accessibility and security</h3><p>Include an <a href="https://accessibility.umich.edu/how-to/procurement-vendors/determine-risk">accessibility risk assessment</a> and explain what data will be shared with the software. Review <a href="https://safecomputing.umich.edu/protect-the-u/safely-use-sensitive-data/examples-by-level">examples of sensitive data by classification level</a> and the <a href="https://safecomputing.umich.edu/dataguide?check_logged_in=1">Sensitive Data Guide to IT Services</a>.</p></div></li>
+          <li><span>4</span><div><h3>Complete the purchase with LSA</h3><p>LSA Technology Services may contact you to discuss security in more detail. They will then arrange a meeting with you to purchase the subscription.</p></div></li>
+        </ol>
+        <div class="info-box">
+          <strong>Start here</strong>
+          <a href="https://lsa.umich.edu/technology-services/help-support.html">LSA Technology Services ↗</a>
+          <a href="https://teamdynamix.umich.edu/TDClient/47/LSAPortal/Requests/ServiceOffering/382/LSA-TS-SpecialtySoftwarePurchases-Support/Request">Software Purchase Form ↗</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span id="consultant-name"></span>
+        <span>University of Michigan Department of Mathematics</span>
+        <span>This website was created with assistance from OpenAI's ChatGPT.</span>
+      </div>
+    </footer>
+  </body>
+</html>

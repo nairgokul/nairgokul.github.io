@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Upcoming AI workshops, meetings, coffee hours, and recordings." />
+    <title>Events &amp; Recordings · AI Consulting for Mathematics</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="site-content.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body data-page="events">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="site-name" href="index.html">AI Consulting for Mathematics</a>
+        <button class="nav-button" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+        <nav id="nav" aria-label="Main navigation">
+          <a href="index.html">Home</a>
+          <a href="resources.html">Resources</a>
+          <a class="active" href="events.html">Events &amp; recordings</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page-main">
+      <header class="page-heading">
+        <p class="label">Community</p>
+        <h1>Events and recordings</h1>
+        <p>Upcoming workshops, meetings, and informal coffee hours, followed by recordings from previous sessions.</p>
+      </header>
+
+      <div class="two-column">
+        <section aria-labelledby="events-title">
+          <h2 id="events-title">Upcoming</h2>
+          <div id="event-list" class="event-list"></div>
+        </section>
+        <section aria-labelledby="recordings-title">
+          <h2 id="recordings-title">Recordings</h2>
+          <div id="recording-list" class="simple-list"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span id="consultant-name"></span>
+        <span>University of Michigan Department of Mathematics</span>
+        <span>This website was created with assistance from OpenAI's ChatGPT.</span>
+      </div>
+    </footer>
+  </body>
+</html>
