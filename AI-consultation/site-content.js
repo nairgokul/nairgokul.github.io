@@ -7,13 +7,20 @@ window.SITE_CONTENT = {
     appointmentNote: "You will answer a short survey when making the appointment.",
     term: "",
     officeHours: [
-      { day: "Wednesday", detail: "10 AM–12 PM · By appointment (tentative)", location: "EH 1846" },
-      { day: "Thursday", detail: "3–5 PM · By appointment (tentative)", location: "EH 1846" },
-      { day: "Friday", detail: "1–3 PM · No appointment necessary (tentative)", location: "EH 1846" }
+      { day: "Wednesday", detail: "10 AM–12 PM · By appointment", location: "EH 1846" },
+      { day: "Thursday", detail: "3–5 PM · By appointment", location: "EH 1846" },
+      { day: "Friday", detail: "1–3 PM · No appointment necessary", location: "EH 1846" }
     ]
   },
 
-  news: [],
+  news: [
+    {
+    date: "September 8, 2026",
+    title: "OpenAI claims to have proved of the Finite-time blow up problem for Navier-Stokes",
+    summary: "OpenAI announced earlier today that they have a proof of the Navier-Stokes Millenium problem.",
+    url: "https://openai.com/index/navier-stokes-solution/"
+  },
+  ],
 
   events: [
     /* Example:
@@ -27,6 +34,14 @@ window.SITE_CONTENT = {
       url: "https://events.umich.edu/event/..."
     }
     */
+    {
+      date: "2026-09-08",
+      time: "1:00–2:00 PM",
+      title: "AI consultation intro on zoom",
+      type: "Online/Zoom presentation",
+      location: "Online/Zoom",
+      url: "https://umich.zoom.us/j/94534554222"
+    }
   ],
 
   recordings: [

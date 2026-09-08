@@ -71,7 +71,7 @@
       eventList.innerHTML = "";
     } else {
       eventList.innerHTML = [...content.events].sort((a, b) => a.date.localeCompare(b.date)).map((item) => `
-        <article class="event-item"><p>${clean(item.date)} · ${clean(item.time)}</p><h3>${clean(item.title)}</h3><span>${clean(item.type)} · ${clean(item.location)}</span><p>${clean(item.description)}</p>${item.url ? `<a href="${clean(item.url)}">Details and registration ↗</a>` : ""}</article>
+        <article class="event-item"><p>${clean(item.date)} · ${clean(item.time)}</p><h3>${clean(item.title)}</h3><span>${clean(item.type)} · ${clean(item.location)}</span><p>${clean(item.description)}</p>${item.url ? `<a href="${clean(item.url)}">Link ↗</a>` : ""}</article>
       `).join("");
     }
 
