@@ -35,9 +35,10 @@ window.SITE_CONTENT = {
     }
     */
     {
-      date: "2026-09-08",
+      speaker: "Ethan Huffman",
+      date: "Wednesday, September 23, 2026",
       time: "1:00–2:00 PM",
-      title: "AI consultation intro on zoom",
+      title: "Efficient use of AI for research",
       type: "Online/Zoom presentation",
       location: "Online/Zoom",
       url: "https://umich.zoom.us/j/94534554222"
@@ -54,6 +55,20 @@ window.SITE_CONTENT = {
       url: "https://umich.zoom.us/rec/..."
     }
     */
+    {
+      speaker: "Gokul Nair",
+      date: "September 09, 2026",
+      duration: "50 minutes",
+      title: "AI consultations: Intro meeting",
+      description: "First zoom meeting on AI consultations.",
+      url: "https://drive.google.com/file/d/1pdni3oLI4dAQVgAjhLmWs-bD3zoyBcwM/view?usp=drive_link",
+      materials: [
+      {
+        label: "PowerPoint slides",
+        url: "https://docs.google.com/presentation/d/1HM8e-ABE_Yt5TZPiNm2zOXEnuOej3aPQvLZtWp2Smfc/edit?usp=sharing"
+      }
+      ]
+    }
   ],
 
   resources: [

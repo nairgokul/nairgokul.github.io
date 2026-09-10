@@ -136,3 +136,8 @@ th { background: var(--soft); font-weight: 650; }
   .news-item { grid-template-columns: 1fr; }
   .news-item p { grid-row: auto; }
 }
+
+/* Space between recording and material links */
+.material-links a + a {
+  margin-left: 10px;
+}
