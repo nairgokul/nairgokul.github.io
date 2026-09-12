@@ -52,7 +52,7 @@
         event.preventDefault();
 
         window.alert(
-          "Add your appointment URL in site-content.js."
+          "Add your appointment URL in assets/site-content.js."
         );
       });
     }
@@ -101,7 +101,7 @@
         .join("");
   }
 
-  if (page === "resources") {
+  if (page === "ai-tools") {
     $("#tools-resources").innerHTML =
       content.resources
         .map(
