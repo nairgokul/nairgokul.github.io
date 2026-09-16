@@ -14,13 +14,37 @@ window.SITE_CONTENT = {
   },
 
   news: [
-    {
-    date: "September 8, 2026",
-    title: "OpenAI claims to have proved of the Finite-time blow up problem for Navier-Stokes",
-    summary: "OpenAI announced earlier today that they have a proof of the Navier-Stokes Millenium problem.",
-    url: "https://openai.com/index/navier-stokes-solution/"
+  {
+    date: "September 14, 2026",
+    title: "Emily Riehl explains the value of mathematical theory building",
+    summary: "Responding to advances in AI mathematics, Riehl argues for the importance of clarifying abstractions, simpler explanations, and communicating ideas. She illustrates this perspective with an example involving adjoint functors.",
+    url: "https://terrytao.wordpress.com/2026/09/14/why-i-do-mathematical-research/"
   },
-  ],
+  {
+    date: "September 13, 2026",
+    title: "Bryna Kra discusses purported proofs of the Nivat conjecture",
+    summary: "Kra reports receiving several purported proofs, with some authors disclosing AI assistance. The claims remain unverified. Her essay calls for greater recognition of mathematical understanding, verification, and exposition.",
+    url: "https://terrytao.wordpress.com/2026/09/13/deep-theorems-were-scarce-and-difficult-and-so-became-an-effective-mechanism-to-identify-deep-thought-ai-has-broken-this-system/"
+  },
+  {
+    date: "September 11, 2026",
+    title: "25 Fields medallists publish a declaration on AI and mathematics",
+    summary: "A declaration signed by mathematicians including Terence Tao, Peter Scholze, and Maryna Viazovska argues that AI-driven problem solving should support understanding, proper attribution, and the development of future mathematicians.",
+    url: "https://mathandai.org/"
+  },
+  {
+    date: "September 11, 2026",
+    title: "Andreas Thom reflects on AI and the non-sofic-groups result",
+    summary: "Thom explains how an earlier AI-generated result builds on his work with Gábor Kun and discusses attribution and research-data transparency. He explicitly states that he does not know whether his AI conversations were used in training.",
+    url: "https://terrytao.wordpress.com/2026/09/11/on-the-existence-of-non-sofic-groups/"
+  },
+  {
+    date: "September 8, 2026",
+    title: "OpenAI announces a proposed Navier–Stokes solution",
+    summary: "OpenAI reports an AI-generated proof of finite-time blowup for the three-dimensional Navier–Stokes equations with smooth external forcing. A manuscript and Lean formalization are public; independent acceptance was not established in this digest.",
+    url: "https://openai.com/index/navier-stokes-solution/"
+  }
+],
 
   events: [
     /* Example:
@@ -34,6 +58,15 @@ window.SITE_CONTENT = {
       url: "https://events.umich.edu/event/..."
     }
     */
+   {
+      speaker: "Zaher Hani and Gokul Nair",
+      date: "Wednesday, September 16, 2026",
+      time: "4:00–5:00 PM",
+      title: "Student AIM Seminar: An Informal Discussion on the Evolving Role of AI in Mathematics: Perspectives on PDEs and Beyond",
+      type: "In-person",
+      location: "EH 3088",
+      url: "https://lsa.umich.edu/math/news-events/all-events.detail.html/152053-21912770.html"
+    },
     {
       speaker: "Ethan Huffman",
       date: "Wednesday, September 23, 2026",
