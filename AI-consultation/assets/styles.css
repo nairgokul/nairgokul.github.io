@@ -90,6 +90,9 @@ th { background: var(--soft); font-weight: 650; }
 .event-item span, .event-item p { color: var(--muted); font-size: .8rem; }
 .event-item p { margin: 5px 0; }
 .event-item a { font-size: .8rem; }
+.recording-item + .recording-item {
+  border-top: 1px solid var(--line);
+}
 .empty { display: grid; gap: 4px; padding: 18px 4px; border-bottom: 1px solid var(--line); }
 .empty strong { font-size: .9rem; }
 .empty span { color: var(--muted); font-size: .8rem; }
