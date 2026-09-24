@@ -80,7 +80,12 @@ news: [
       title: "Student AIM Seminar: An Informal Discussion on the Evolving Role of AI in Mathematics: Perspectives on PDEs and Beyond",
       type: "In-person",
       location: "EH 3088",
-      url: "https://lsa.umich.edu/math/news-events/all-events.detail.html/152053-21912770.html"
+      materials: [
+        {
+          label: "Seminar website",
+          url: "https://lsa.umich.edu/math/news-events/all-events.detail.html/152053-21912770.html"
+        }
+      ]
     },
     {
       speaker: "Ethan Huffman",
