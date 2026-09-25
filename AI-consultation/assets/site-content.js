@@ -15,6 +15,12 @@ window.SITE_CONTENT = {
 
 news: [
   {
+    date: "September 25, 2026",
+    title: "Report of Summit on PhD Math Education in the Age of AI",
+    summary: "A document discussing the future of math education and evolving norms in the age of AI.",
+    url: "https://cmsa.fas.harvard.edu/media/2026/09/Summit-on-PhD-Math-Education-in-the-Age-of-AI.pdf"
+  },
+  {
     date: "September 22, 2026",
     title: "Marco Trombetti introduces ProofForum for reviewing AI-generated mathematics",
     summary: "ProofForum aims to make checking, correcting, and attributing AI-generated mathematics a public collaborative process. Trombetti cautions that its initial claimed solutions have not all been checked.",
@@ -25,12 +31,6 @@ news: [
     title: "Independent mathematics advisory group announces its formation",
     summary: "Nine researchers, including Timothy Gowers and Melanie Matchett Wood, will advise AI companies on research and responsible publication. Its initial task concerns OpenAI's reported results; the group's formation does not certify those claims.",
     url: "https://terrytao.wordpress.com/2026/09/21/advisory-group-on-mathematics-and-artificial-intelligence/"
-  },
-  {
-    date: "September 17, 2026",
-    title: "David Glickenstein proposes graduate training centered on mathematical judgment",
-    summary: "Glickenstein's paper argues that graduate programs should emphasize evaluating mathematical claims, proofs, definitions, and research directions as generative AI changes how mathematics is learned and assessed.",
-    url: "https://arxiv.org/abs/2609.21132"
   }
 ],
 
