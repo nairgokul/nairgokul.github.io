@@ -46,7 +46,19 @@ news: [
       url: "https://events.umich.edu/event/..."
     }
     */
+<<<<<<< Updated upstream
    
+=======
+    {
+      speaker: "Ethan Huffman",
+      date: "Wednesday, September 23, 2026",
+      time: "1:00–2:00 PM",
+      title: "Efficient use of AI for research",
+      type: "Online/Zoom presentation",
+      location: "Online/Zoom",
+      url: "https://umich.zoom.us/j/94534554222"
+    }
+>>>>>>> Stashed changes
   ],
 
   recordings: [
@@ -76,6 +88,7 @@ news: [
     {
       speaker: "Zaher Hani and Gokul Nair",
       date: "Wednesday, September 16, 2026",
+<<<<<<< Updated upstream
       time: "4:00–5:00 PM",
       title: "Student AIM Seminar: An Informal Discussion on the Evolving Role of AI in Mathematics: Perspectives on PDEs and Beyond",
       type: "In-person",
@@ -101,6 +114,10 @@ news: [
           url: "https://drive.google.com/file/d/1FOx9DobMn3upDNC7g5Qw_GLitxPo3uda/view?usp=sharing"
         }
       ]
+=======
+      title: "Student AIM Seminar: An Informal Discussion on the Evolving Role of AI in Mathematics: Perspectives on PDEs and Beyond",
+      location: "EH 3088",
+>>>>>>> Stashed changes
     }
   ],
 
