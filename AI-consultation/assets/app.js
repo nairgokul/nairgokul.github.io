@@ -80,19 +80,26 @@
         )
         .join("");
 
+  }
+
+  if (page === "home" || page === "news") {
+    const news = [...content.news].sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
+    const visibleNews = page === "home" ? news.slice(0, 3) : news;
+
     $("#news-list").innerHTML =
-      content.news
-        .slice(0, 3)
+      visibleNews
         .map(
           (item) => `
             <article class="news-item">
               <p>${clean(item.date)}</p>
 
-              <h3>
+              <${page === "news" ? "h2" : "h3"}>
                 <a href="${clean(item.url)}">
                   ${clean(item.title)}
                 </a>
-              </h3>
+              </${page === "news" ? "h2" : "h3"}>
 
               <span>${clean(item.summary)}</span>
             </article>

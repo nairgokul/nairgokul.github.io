@@ -15,22 +15,76 @@ window.SITE_CONTENT = {
 
 news: [
   {
-    date: "September 25, 2026",
-    title: "Report of Summit on PhD Math Education in the Age of AI",
-    summary: "A document discussing the future of math education and evolving norms in the age of AI.",
-    url: "https://cmsa.fas.harvard.edu/media/2026/09/Summit-on-PhD-Math-Education-in-the-Age-of-AI.pdf"
+    "date": "October 5, 2026",
+    "title": "Jeremy Avigad considers the future of mathematics with AI",
+    "summary": "Writing on Terence Tao's blog, Jeremy Avigad advocates harder questions, broader conceptual thinking, and experimentation with new tools, emphasizing mathematical understanding and support for early-career researchers.",
+    "url": "https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/"
   },
   {
-    date: "September 22, 2026",
-    title: "Marco Trombetti introduces ProofForum for reviewing AI-generated mathematics",
-    summary: "ProofForum aims to make checking, correcting, and attributing AI-generated mathematics a public collaborative process. Trombetti cautions that its initial claimed solutions have not all been checked.",
-    url: "https://proofsandprompts.com/2026/09/22/proofforum-keeping-ai-generated-mathematics-human/"
+    "date": "October 4, 2026",
+    "title": "Córdoba and Martínez-Zoroa explain the foundations of fluid singularities",
+    "summary": "Diego Córdoba and Luis Martínez-Zoroa survey vortex-cascade constructions and the human research underlying recent AI-assisted developments. This exposition distinguishes forcing and regularity assumptions; it is not a new AI proof announcement.",
+    "url": "https://terrytao.wordpress.com/2026/10/04/on-classical-solutions-and-singularity-formation-in-incompressible-fluids/"
   },
   {
-    date: "September 21, 2026",
-    title: "Independent mathematics advisory group announces its formation",
-    summary: "Nine researchers, including Timothy Gowers and Melanie Matchett Wood, will advise AI companies on research and responsible publication. Its initial task concerns OpenAI's reported results; the group's formation does not certify those claims.",
-    url: "https://terrytao.wordpress.com/2026/09/21/advisory-group-on-mathematics-and-artificial-intelligence/"
+    "date": "October 1, 2026",
+    "title": "arXiv introduces submission limits amid AI-related moderation pressure",
+    "summary": "arXiv now limits each submitter to two submissions per calendar month and three active submissions. Its announcement cites rising volume and AI-assisted low-quality papers as pressures on volunteer moderation.",
+    "url": "https://blog.arxiv.org/2026/10/01/updated-rate-limit-policy/"
+  },
+  {
+    "date": "September 25, 2026",
+    "title": "Report of Summit on PhD Math Education in the Age of AI",
+    "summary": "A document discussing the future of math education and evolving norms in the age of AI.",
+    "url": "https://cmsa.fas.harvard.edu/media/2026/09/Summit-on-PhD-Math-Education-in-the-Age-of-AI.pdf"
+  },
+  {
+    "date": "September 22, 2026",
+    "title": "Marco Trombetti introduces ProofForum for reviewing AI-generated mathematics",
+    "summary": "ProofForum aims to make checking, correcting, and attributing AI-generated mathematics a public collaborative process. Trombetti cautions that its initial claimed solutions have not all been checked.",
+    "url": "https://proofsandprompts.com/2026/09/22/proofforum-keeping-ai-generated-mathematics-human/"
+  },
+  {
+    "date": "September 21, 2026",
+    "title": "Independent mathematics advisory group announces its formation",
+    "summary": "Nine researchers, including Timothy Gowers and Melanie Matchett Wood, will advise AI companies on research and responsible publication. Its initial task concerns OpenAI's reported results; the group's formation does not certify those claims.",
+    "url": "https://terrytao.wordpress.com/2026/09/21/advisory-group-on-mathematics-and-artificial-intelligence/"
+  },
+  {
+    "date": "September 17, 2026",
+    "title": "David Glickenstein proposes graduate training centered on mathematical judgment",
+    "summary": "Glickenstein's paper argues that graduate programs should emphasize evaluating mathematical claims, proofs, definitions, and research directions as generative AI changes how mathematics is learned and assessed.",
+    "url": "https://arxiv.org/abs/2609.21132"
+  },
+  {
+    "date": "September 14, 2026",
+    "title": "Emily Riehl explains the value of mathematical theory building",
+    "summary": "Responding to advances in AI mathematics, Riehl argues for the importance of clarifying abstractions, simpler explanations, and communicating ideas. She illustrates this perspective with an example involving adjoint functors.",
+    "url": "https://terrytao.wordpress.com/2026/09/14/why-i-do-mathematical-research/"
+  },
+  {
+    "date": "September 13, 2026",
+    "title": "Bryna Kra discusses purported proofs of the Nivat conjecture",
+    "summary": "Kra reports receiving several purported proofs, with some authors disclosing AI assistance. The claims remain unverified. Her essay calls for greater recognition of mathematical understanding, verification, and exposition.",
+    "url": "https://terrytao.wordpress.com/2026/09/13/deep-theorems-were-scarce-and-difficult-and-so-became-an-effective-mechanism-to-identify-deep-thought-ai-has-broken-this-system/"
+  },
+  {
+    "date": "September 11, 2026",
+    "title": "25 Fields medallists publish a declaration on AI and mathematics",
+    "summary": "A declaration signed by mathematicians including Terence Tao, Peter Scholze, and Maryna Viazovska argues that AI-driven problem solving should support understanding, proper attribution, and the development of future mathematicians.",
+    "url": "https://mathandai.org/"
+  },
+  {
+    "date": "September 11, 2026",
+    "title": "Andreas Thom reflects on AI and the non-sofic-groups result",
+    "summary": "Thom explains how an earlier AI-generated result builds on his work with Gábor Kun and discusses attribution and research-data transparency. He explicitly states that he does not know whether his AI conversations were used in training.",
+    "url": "https://terrytao.wordpress.com/2026/09/11/on-the-existence-of-non-sofic-groups/"
+  },
+  {
+    "date": "September 8, 2026",
+    "title": "OpenAI announces a proposed Navier–Stokes solution",
+    "summary": "OpenAI reports an AI-generated proof of finite-time blowup for the three-dimensional Navier–Stokes equations with smooth external forcing. A manuscript and Lean formalization are public; independent acceptance was not established in this digest.",
+    "url": "https://openai.com/index/navier-stokes-solution/"
   }
 ],
 
