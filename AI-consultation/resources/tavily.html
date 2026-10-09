@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Set up the Tavily M-Connector for web search in U-M GPT." />
+    <title>Web search in U-M GPT with Tavily · AI Consulting for Michigan Mathematics</title>
+    <link rel="stylesheet" href="../assets/styles.css" />
+    <script src="../assets/site-content.js" defer></script>
+    <script src="../assets/app.js" defer></script>
+  </head>
+  <body data-page="tavily">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="site-name" href="../index.html">AI Consulting for Michigan Mathematics</a>
+        <button class="nav-button" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+        <nav id="nav" aria-label="Main navigation">
+          <a href="../index.html">Home</a>
+          <a href="../news.html">News</a>
+          <a class="active" href="index.html">Resources</a>
+          <a href="../events.html">Events &amp; recordings</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page-main narrow-page">
+      <header class="page-heading">
+        <p class="label"><a href="index.html">← All resources</a></p>
+        <h1>Web search in U-M GPT with Tavily</h1>
+      </header>
+
+      <p>M-Connectors link U-M GPT to external tools and services. Tavily provides web search, helping U-M GPT find up-to-date information and source links for research.</p>
+      <p>If Tavily appears in your connector catalog, follow these steps:</p>
+      <ol class="steps">
+        <li><span>1</span><div><h2>Open the connector catalog</h2><p>Sign in to <a href="https://umgpt.umich.edu/">U-M GPT</a>. You must select the <strong>GPT-5.6 Sol (agent)</strong> model to use this connector. Open the three-dot <strong>Options</strong> menu in the lower-left corner and select <strong>Manage Connectors</strong>.</p></div></li>
+        <li><span>2</span><div><h2>Install Tavily</h2><p>Find <strong>Tavily</strong> and click <strong>Install</strong>. If <strong>Finish Authentication</strong> appears, click it and complete the connection prompts.</p></div></li>
+        <li><span>3</span><div><h2>Enable it for your conversation</h2><p>Return to U-M GPT. Click <strong>No Active Connectors</strong> (or the active-connectors button) in the upper-right corner, toggle <strong>Tavily</strong> on, and click <strong>Done</strong>.</p></div></li>
+        <li><span>4</span><div><h2>Try a web search</h2><p>Ask: “Use Tavily to search the web for recent AI-assisted mathematics research. Include dates and source links.”</p></div></li>
+      </ol>
+      <p>These steps follow <a href="https://its.umich.edu/computing/ai/m-connectors">U-M ITS’s official M-Connector setup instructions</a>. Connector availability may vary. U-M’s public guide does not specify whether Tavily requires a separate account or API key; follow any prompts shown during installation.</p>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span id="consultant-name"></span>
+        <span>University of Michigan Department of Mathematics</span>
+        <span>This website was created with assistance from OpenAI's ChatGPT.</span>
+      </div>
+    </footer>
+  </body>
+</html>
