@@ -15,6 +15,24 @@ window.SITE_CONTENT = {
 
 news: [
   {
+    "date": "October 9, 2026",
+    "title": "Thomas Hales examines Lean reliability and AI-generated proofs",
+    "summary": "In a guest post on Terence Tao’s blog, Thomas Hales discusses Lean’s foundations, soundness bugs, and AI-assisted formalization. He emphasizes kernel checking, human audits of theorem statements, and independent verification rather than blind trust in formal proofs.",
+    "url": "https://terrytao.wordpress.com/2026/10/09/what-mathematicians-should-know-about-the-lean-theorem-proverquestions-of-reliability-and-ai/"
+  },
+  {
+    "date": "October 8, 2026",
+    "title": "Álvaro Lozano-Robledo offers students advice on mathematics in the AI era",
+    "summary": "Writing on Terence Tao’s blog, Álvaro Lozano-Robledo encourages students to keep studying mathematics and emphasizes human understanding, research, and communication. His essay offers a hopeful personal perspective while acknowledging uncertainty about AI’s impact on mathematical careers.",
+    "url": "https://terrytao.wordpress.com/2026/10/08/what-should-we-tell-our-students/"
+  },
+  {
+    "date": "October 6, 2026",
+    "title": "OpenAI releases mathematical results and Lean formalizations",
+    "summary": "OpenAI reports new results from an internal model, sharing papers, many Lean formalizations, and details on reasoning and compute. The release draws on advice from an independent mathematics advisory group; the announcement does not establish independent acceptance of every result.",
+    "url": "https://openai.com/index/sharing-ai-progress-in-mathematics/"
+  },
+  {
     "date": "October 5, 2026",
     "title": "Jeremy Avigad considers the future of mathematics with AI",
     "summary": "Writing on Terence Tao's blog, Jeremy Avigad advocates harder questions, broader conceptual thinking, and experimentation with new tools, emphasizing mathematical understanding and support for early-career researchers.",

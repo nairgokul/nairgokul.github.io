@@ -86,7 +86,7 @@
     const news = [...content.news].sort(
       (a, b) => new Date(b.date) - new Date(a.date)
     );
-    const visibleNews = page === "home" ? news.slice(0, 3) : news;
+    const visibleNews = page === "home" ? news.slice(0, 5) : news;
 
     $("#news-list").innerHTML =
       visibleNews
