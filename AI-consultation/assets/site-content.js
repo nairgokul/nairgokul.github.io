@@ -100,7 +100,15 @@ news: [
       url: "https://events.umich.edu/event/..."
     }
     */
-   
+    {
+      date: "2026-10-29",
+      time: "2:00 PM Eastern Time",
+      title: "SIAM Career Opportunities Committee Panel on AI and Employment",
+      type: "Virtual panel",
+      location: "Online via Zoom",
+      description: "A panel for students on how AI is changing careers in applied mathematics. Professionals will discuss their use of AI, offer advice on developing skills and careers, and answer audience questions.",
+      url: "https://siam.zoom.us/webinar/register/WN_TKq8dkVdQYam--5_Z9DMng#/registration"
+    }
   ],
 
   recordings: [
