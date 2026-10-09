@@ -114,6 +114,17 @@ news: [
     }
     */
     {
+      date: "August 1–2, 2026",
+      title: "Agentic AI Summit 2026 | Free Livestream",
+      description: "Hosted by Berkeley RDI and the Responsible Decentralized Intelligence Foundation, this two-day summit explored AI agents, research, applications, and safety.",
+      materials: [
+        {
+          label: "Event website",
+          url: "https://luma.com/5buzmncg"
+        }
+      ]
+    },
+    {
       speaker: "Gokul Nair",
       date: "September 09, 2026",
       duration: "50 minutes",
@@ -153,6 +164,16 @@ news: [
         {
           label: "Slides",
           url: "https://drive.google.com/file/d/1FOx9DobMn3upDNC7g5Qw_GLitxPo3uda/view?usp=sharing"
+        }
+      ]
+    },
+    {
+      date: "Tuesday, September 29, 2026",
+      title: "CCMB Tuesday Popup: Biomedical Gen AI Learning Community",
+      materials: [
+        {
+          label: "Event website",
+          url: "https://medschool.umich.edu/events/ccmb-tuesday-popup-series/ccmb-tuesday-popup-biomedical-gen-ai-learning-community/2026-09-29"
         }
       ]
     }
