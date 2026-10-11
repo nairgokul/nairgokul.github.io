@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Gram–Schmidt in Motion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one 16:9 black stage (the "screen"), a control bar under it, then the
+   numbered steps, which double as the transcript. A single dark look, chosen on
+   purpose to match the animation's black stage. */
+:root {
+  color-scheme: dark;
+  --bg: #0d0f12;
+  --panel: #14171c;
+  --line: #262b32;
+  --fg: #e8ebee;
+  --muted: #9aa4ad;
+  --accent: #58c4dd;      /* 3b1b blue: the colour of every u */
+  --accent-ink: #062530;
+  --stage: #000000;
+  --serif: "Source Serif 4", "STIX Two Text", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --step-1: clamp(0.8rem, 0.78rem + 0.1vw, 0.85rem);
+  --step0: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --step1: clamp(1.15rem, 1.05rem + 0.5vw, 1.35rem);
+  --step3: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+}
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  font-family: var(--serif);
+  font-size: var(--step0);
+  line-height: 1.55;
+}
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 28px 56px;
+  display: grid;
+  gap: 18px;
+}
+header { display: grid; gap: 6px; }
+.eyebrow {
+  font-family: var(--mono);
+  font-size: var(--step-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+h1 {
+  font-size: var(--step3);
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 0;
+  text-wrap: balance;
+}
+.lede { margin: 0; max-width: 65ch; color: var(--muted); }
+.lede mjx-container { color: var(--fg); }
+
+.stage {
+  position: relative;
+  background: var(--stage);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+#stage {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+}
+.loading {
+  position: absolute;
+  inset: auto 0 12px 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--step-1);
+  color: var(--muted);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.btns { display: flex; gap: 6px; }
+button.icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg);
+  cursor: pointer;
+}
+button.icon:hover { border-color: var(--muted); }
+button.icon.primary {
+  width: 48px;
+  height: 48px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+button.icon svg { width: 18px; height: 18px; }
+button.icon.primary svg { width: 20px; height: 20px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.scrubber {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#scrub { flex: 1; min-width: 0; accent-color: var(--accent); }
+.time {
+  font-family: var(--mono);
+  font-size: var(--step-1);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.speed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: var(--step-1);
+  color: var(--muted);
+}
+select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.caption {
+  margin: 0;
+  min-height: 3.2em;
+  max-width: 70ch;
+  font-size: var(--step1);
+  line-height: 1.45;
+}
+.caption .num {
+  font-family: var(--mono);
+  font-size: var(--step-1);
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  margin-right: 0.6em;
+}
+.keys { margin: 0; font-family: var(--mono); font-size: var(--step-1); color: var(--muted); }
+kbd {
+  font-family: var(--mono);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 5px;
+  color: var(--fg);
+}
+
+section.transcript { display: grid; gap: 10px; }
+h2 { font-size: var(--step1); font-weight: 600; margin: 0; }
+ol.steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 8px;
+}
+ol.steps li { counter-increment: step; min-width: 0; }
+ol.steps button {
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 2.2em 1fr;
+  align-content: start;
+  gap: 2px 8px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+ol.steps button::before {
+  content: counter(step);
+  grid-row: span 2;
+  font-family: var(--mono);
+  font-size: var(--step-1);
+  color: var(--muted);
+  padding-top: 0.2em;
+  font-variant-numeric: tabular-nums;
+}
+ol.steps button:hover { border-color: var(--muted); }
+ol.steps li[aria-current="step"] button { background: var(--panel); border-color: var(--accent); }
+ol.steps li[aria-current="step"] button::before { color: var(--accent); }
+.st-title { font-weight: 600; }
+.st-text { color: var(--muted); font-size: 0.95em; min-width: 0; }
+.st-text mjx-container, .caption mjx-container { color: var(--fg); }
+mjx-container[jax="SVG"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Math 214 &middot; Lecture 22</p>
+    <h1>Gram–Schmidt in Motion</h1>
+    <p class="lede">Turn a basis \(\VA1, \VA2, \VA3\) into an orthonormal basis \(\UA1, \UA2, \UA3\): normalize, subtract the projection, normalize again.</p>
+  </header>
+
+  <div class="stage">
+    <canvas id="stage" role="img" aria-describedby="steps-heading"
+      aria-label="Animation of the Gram–Schmidt process. The current step is described in the caption below the controls, and every step is listed in order under Steps."></canvas>
+    <div class="loading" id="loading">Typesetting the labels&hellip;</div>
+  </div>
+
+  <div class="controls">
+    <div class="btns">
+      <button class="icon" id="btn-restart" type="button" aria-label="Restart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
+      </button>
+      <button class="icon" id="btn-prev" type="button" aria-label="Previous step">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5 9 12l10 7z" fill="currentColor"/><path d="M5 5v14"/></svg>
+      </button>
+      <button class="icon primary" id="btn-play" type="button" aria-label="Play">
+        <svg id="ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>
+        <svg id="ico-pause" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M6 4h4v16H6zM14 4h4v16h-4z" fill="currentColor"/></svg>
+      </button>
+      <button class="icon" id="btn-next" type="button" aria-label="Next step">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5l10 7-10 7z" fill="currentColor"/><path d="M19 5v14"/></svg>
+      </button>
+    </div>
+    <div class="scrubber">
+      <input type="range" id="scrub" min="0" max="36" step="0.01" value="0" aria-label="Position in the animation">
+      <span class="time" id="time" aria-hidden="true">0:00 / 0:36</span>
+    </div>
+    <label class="speed" for="speed">Speed
+      <select id="speed">
+        <option value="0.5">0.5&times;</option>
+        <option value="0.75">0.75&times;</option>
+        <option value="1" selected>1&times;</option>
+        <option value="1.5">1.5&times;</option>
+      </select>
+    </label>
+  </div>
+
+  <p class="caption" id="caption" aria-live="polite"></p>
+  <p class="keys"><kbd>Space</kbd> play or pause &middot; <kbd>&larr;</kbd> <kbd>&rarr;</kbd> previous or next step</p>
+
+  <section class="transcript" aria-labelledby="steps-heading">
+    <h2 id="steps-heading">Steps</h2>
+    <ol class="steps" id="steps">
+      <li data-t="0"><button type="button">
+        <span class="st-title">Normalize \(\VA1\)</span>
+        <span class="st-text">Start with \(\VA1\) and divide it by its length. The result, \(\UA1 = \VA1/\lVert\VA1\rVert\), is a unit vector pointing the same way.</span>
+      </button></li>
+      <li data-t="5.8"><button type="button">
+        <span class="st-title">Draw \(\VA2\)</span>
+        <span class="st-text">Bring in the second basis vector \(\VA2\). It is not orthogonal to \(\UA1\).</span>
+      </button></li>
+      <li data-t="7.6"><button type="button">
+        <span class="st-title">Project \(\VA2\) onto \(\UA1\)</span>
+        <span class="st-text">Drop a perpendicular from the tip of \(\VA2\) to the line through \(\UA1\). That gives \(\VPAR2 = (\UA1\cdot\VA2)\,\UA1\). What is left, \(\VPERP2 = \VA2 - \VPAR2\), is orthogonal to \(\UA1\).</span>
+      </button></li>
+      <li data-t="13.9"><button type="button">
+        <span class="st-title">Normalize \(\VPERP2\)</span>
+        <span class="st-text">Slide \(\VPERP2\) back to the origin and divide by its length: \(\UA2 = \VPERP2/\lVert\VPERP2\rVert\). Now \(\UA1\) and \(\UA2\) are orthonormal.</span>
+      </button></li>
+      <li data-t="16.2"><button type="button">
+        <span class="st-title">Reveal the plane \(\PV\)</span>
+        <span class="st-text">Tilt the camera. Everything so far lies in the plane \(\PV = \operatorname{span}(\UA1, \UA2)\), which sits inside three-dimensional space.</span>
+      </button></li>
+      <li data-t="21"><button type="button">
+        <span class="st-title">Draw \(\VA3\)</span>
+        <span class="st-text">Bring in a third vector \(\VA3\), which points out of the plane \(\PV\).</span>
+      </button></li>
+      <li data-t="22.9"><button type="button">
+        <span class="st-title">Project \(\VA3\) onto \(\PV\)</span>
+        <span class="st-text">Drop a perpendicular from the tip of \(\VA3\) to the plane. That gives \(\VPAR3 = (\UA1\cdot\VA3)\,\UA1 + (\UA2\cdot\VA3)\,\UA2\). The rest, \(\VPERP3 = \VA3 - \VPAR3\), is perpendicular to \(\PV\).</span>
+      </button></li>
+      <li data-t="29.3"><button type="button">
+        <span class="st-title">Normalize \(\VPERP3\)</span>
+        <span class="st-text">Slide \(\VPERP3\) back to the origin and divide by its length: \(\UA3 = \VPERP3/\lVert\VPERP3\rVert\).</span>
+      </button></li>
+      <li data-t="31.3"><button type="button">
+        <span class="st-title">An orthonormal basis</span>
+        <span class="st-text">\(\UA1, \UA2, \UA3\) each have length 1, and each is perpendicular to the other two: \(\vec u_i\cdot\vec u_j\) is 1 when \(i = j\) and 0 otherwise.</span>
+      </button></li>
+    </ol>
+  </section>
+</div>
+
+<script>
+// 3b1b palette. Each kind of vector keeps one colour throughout.
+const HEX = { v: 'FFE45C', u: '58C4DD', par: 'E07AD0', perp: '83C167' };
+// TeX colour spec "r,g,b" (0-255) for \color[RGB]{...}.
+const RGB = h => [0, 2, 4].map(i => parseInt(HEX[h].slice(i, i + 2), 16)).join(',');
+window.MathJax = {
+  loader: { load: ['[tex]/color'] },
+  tex: {
+    packages: { '[+]': ['color'] },
+    inlineMath: [['\\(', '\\)']],
+    macros: {
+      VA:    ['{\\color[RGB]{' + RGB('v')    + '}\\vec{v}_{#1}}', 1],
+      UA:    ['{\\color[RGB]{' + RGB('u')    + '}\\vec{u}_{#1}}', 1],
+      VPAR:  ['{\\color[RGB]{' + RGB('par')  + '}\\vec{v}_{#1}^{\\,\\parallel}}', 1],
+      VPERP: ['{\\color[RGB]{' + RGB('perp') + '}\\vec{v}_{#1}^{\\,\\perp}}', 1],
+      PV:    '{\\color[RGB]{' + RGB('u') + '}V}'
+    }
+  },
+  svg: { fontCache: 'none' },
+  options: { enableMenu: false },
+  startup: {
+    typeset: false,
+    ready() {
+      MathJax.startup.defaultReady();
+      MathJax.startup.promise.then(() => {
+        window.__mjDone = true;
+        if (window.__mjReady) window.__mjReady();
+      });
+    }
+  }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<script>
+(() => {
+  // ---------- timeline and helpers ----------
+  const DUR = 36;
+  const COL = {
+    v: '#' + HEX.v, u: '#' + HEX.u, par: '#' + HEX.par, perp: '#' + HEX.perp,
+    grid: '#29ABCA', axis: '#D8D8D8', guide: '#BBBBBB', mark: '#E6E6E6'
+  };
+  const clamp01 = x => Math.max(0, Math.min(1, x));
+  const smooth = x => x * x * x * (x * (6 * x - 15) + 10);
+  const E = (t, a, b) => smooth(clamp01((t - a) / (b - a)));
+  const lerp = (a, b, s) => a + (b - a) * s;
+  const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const len = a => Math.sqrt(dot(a, a));
+  const unit = a => mul(a, 1 / len(a));
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const lerpV = (a, b, s) => add(a, mul(sub(b, a), s));
+  function mixHex(c1, c2, s) {
+    const p = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+    const a = p(c1), b = p(c2);
+    return 'rgb(' + a.map((x, i) => Math.round(lerp(x, b[i], s))).join(',') + ')';
+  }
+
+  // ---------- the vectors (exact Gram–Schmidt) ----------
+  const O = [0, 0, 0];
+  const V1 = [3, 1, 0], V2 = [1.5, 2.5, 0], V3 = [2.2, 1.6, 2.4];
+  const U1 = unit(V1), L1 = len(V1);
+  const V2PAR = mul(U1, dot(U1, V2));
+  const V2PERP = sub(V2, V2PAR), L2 = len(V2PERP);
+  const U2 = unit(V2PERP);
+  const V3PAR = add(mul(U1, dot(U1, V3)), mul(U2, dot(U2, V3)));
+  const V3PERP = sub(V3, V3PAR), L3 = len(V3PERP);
+  const U3 = unit(V3PERP);
+
+  // ---------- canvas and camera ----------
+  const cv = document.getElementById('stage');
+  const ctx = cv.getContext('2d');
+  let W = 960, H = 540, DPR = 1, cam = null, ppu = 100;
+
+  function camera(t) {
+    const cm = E(t, 17, 20.5);
+    // A slow sway around the best viewing angle (like 3b1b's ambient camera
+    // rotation), then a slight lift at the end to show all three u's.
+    const phi = (lerp(0, 63, cm) + 7 * E(t, 31.6, 35)) * Math.PI / 180;
+    const sway = t > 20.5 ? 9 * Math.sin(2 * Math.PI * (t - 20.5) / 15.5) : 0;
+    const thDeg = lerp(-90, -118, cm) + sway;
+    const th = thDeg * Math.PI / 180;
+    const d = [Math.sin(phi) * Math.cos(th), Math.sin(phi) * Math.sin(th), Math.cos(phi)];
+    const r = [-Math.sin(th), Math.cos(th), 0];
+    return {
+      d, r, up: cross(d, r),
+      center: lerpV([1.2, 1.3, 0], [1.15, 1.0, 1.05], cm),
+      span: lerp(8.6, 9.0, cm),
+      persp: cm / 22
+    };
+  }
+  function P(p) {
+    const q = sub(p, cam.center);
+    const x = dot(q, cam.r), y = dot(q, cam.up), z = dot(q, cam.d);
+    const s = 1 / (1 - cam.persp * z);
+    return [W / 2 + x * s * ppu, H / 2 - y * s * ppu];
+  }
+
+  // ---------- primitives ----------
+  const SW = () => Math.max(1.6, W * 0.0042);
+  function seg(a, b, color, alpha, width, dash) {
+    if (alpha <= 0.002) return;
+    const A = P(a), B = P(b);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke();
+    ctx.restore();
+  }
+  function arrow(tail, head, color, alpha) {
+    if (alpha <= 0.002) return;
+    const A = P(tail), B = P(head);
+    const dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy);
+    if (L < 0.75) return;
+    const ux = dx / L, uy = dy / L;
+    const tip = Math.min(0.3 * ppu, 0.35 * L), half = tip * 0.42;
+    const bx = B[0] - ux * tip, by = B[1] - uy * tip;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color; ctx.fillStyle = color;
+    ctx.lineWidth = SW(); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(bx + ux * tip * 0.15, by + uy * tip * 0.15); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(B[0], B[1]);
+    ctx.lineTo(bx - uy * half, by + ux * half);
+    ctx.lineTo(bx + uy * half, by - ux * half);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  function dotAt(p, color, alpha) {
+    if (alpha <= 0.002) return;
+    const A = P(p);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(A[0], A[1], SW() * 1.2, 0, 2 * Math.PI); ctx.fill();
+    ctx.restore();
+  }
+  function rightMark(p, a, b, color, alpha, size = 0.24) {
+    if (alpha <= 0.002) return;
+    const pa = add(p, mul(a, size)), pb = add(p, mul(b, size)), pab = add(pa, mul(b, size));
+    const A = P(pa), B = P(pab), C = P(pb);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = color;
+    ctx.lineWidth = SW() * 0.55; ctx.lineJoin = 'miter';
+    ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.lineTo(C[0], C[1]); ctx.stroke();
+    ctx.restore();
+  }
+  function poly(pts, fill, fillA, stroke, strokeA) {
+    const S = pts.map(P);
+    ctx.save();
+    ctx.beginPath(); S.forEach((s, i) => i ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1])); ctx.closePath();
+    if (fillA > 0.002) { ctx.globalAlpha = fillA; ctx.fillStyle = fill; ctx.fill(); }
+    if (strokeA > 0.002) { ctx.globalAlpha = strokeA; ctx.strokeStyle = stroke; ctx.lineWidth = SW() * 0.5; ctx.stroke(); }
+    ctx.restore();
+  }
+
+  // ---------- typeset labels (MathJax SVG drawn into the canvas) ----------
+  const TEX = {
+    v1: String.raw`\VA1`, u1: String.raw`\UA1`, v2: String.raw`\VA2`, u2: String.raw`\UA2`,
+    v3: String.raw`\VA3`, u3: String.raw`\UA3`,
+    v2par: String.raw`\VPAR2`, v2perp: String.raw`\VPERP2`,
+    v3par: String.raw`\VPAR3`, v3perp: String.raw`\VPERP3`,
+    V: String.raw`\PV`,
+    F1: String.raw`\displaystyle \UA1 = \frac{\VA1}{\lVert \VA1 \rVert}`,
+    F2: String.raw`\VPAR2 = (\UA1 \cdot \VA2)\,\UA1`,
+    F3: String.raw`\VPERP2 = \VA2 - \VPAR2`,
+    F4: String.raw`\displaystyle \UA2 = \frac{\VPERP2}{\lVert \VPERP2 \rVert}`,
+    F5: String.raw`\PV = \operatorname{span}(\UA1, \UA2)`,
+    F6: String.raw`\VPAR3 = (\UA1 \cdot \VA3)\,\UA1 + (\UA2 \cdot \VA3)\,\UA2`,
+    F7: String.raw`\VPERP3 = \VA3 - \VPAR3`,
+    F8: String.raw`\displaystyle \UA3 = \frac{\VPERP3}{\lVert \VPERP3 \rVert}`,
+    F9: String.raw`\vec u_i \cdot \vec u_j = \begin{cases} 1 & i = j \\ 0 & i \neq j \end{cases}`
+  };
+  const IMG = {};
+  const BASE = 64;  // render size in px per em; drawn scaled down
+  function texToImage(tex) {
+    const node = MathJax.tex2svg(tex, { display: false });
+    const svg = node.querySelector('svg');
+    const ex = BASE * 0.442;
+    const w = parseFloat(svg.getAttribute('width')) * ex;
+    const h = parseFloat(svg.getAttribute('height')) * ex;
+    svg.setAttribute('width', w); svg.setAttribute('height', h);
+    svg.removeAttribute('style');
+    const s = new XMLSerializer().serializeToString(svg).replace(/currentColor/g, '#FFFFFF');
+    return new Promise(res => {
+      const img = new Image();
+      img.onload = () => res({ img, w, h });
+      img.onerror = () => res(null);
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
+    });
+  }
+  const labelSize = () => Math.max(13, Math.min(30, W * 0.027));
+  // Draw a typeset image; "reveal" wipes it in left to right, like 3b1b's Write.
+  function drawTex(key, x, y, size, alpha, reveal, anchor) {
+    const it = IMG[key];
+    if (!it || alpha <= 0.002 || reveal <= 0.002) return null;
+    const k = size / BASE, w = it.w * k, h = it.h * k;
+    const x0 = anchor === 'left' ? x : x - w / 2, y0 = anchor === 'left' ? y : y - h / 2;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath(); ctx.rect(x0 - 2, y0 - 4, (w + 4) * reveal, h + 8); ctx.clip();
+    ctx.drawImage(it.img, x0, y0, w, h);
+    ctx.restore();
+    return { w, h };
+  }
+  // Put a label just beyond the tip of a vector, along its screen direction.
+  function label(key, tail, head, alpha, reveal, nudge = [0, 0]) {
+    const it = IMG[key];
+    if (!it) return;
+    const A = P(tail), B = P(head);
+    let dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy);
+    if (L < 1) { dx = 1; dy = 0; L = 1; }
+    dx /= L; dy /= L;
+    const fs = labelSize(), k = fs / BASE, w = it.w * k, h = it.h * k;
+    const off = fs * 0.35 + 0.5 * Math.abs(dx) * w + 0.5 * Math.abs(dy) * h;
+    drawTex(key, B[0] + dx * off + nudge[0] * fs, B[1] + dy * off + nudge[1] * fs, fs, alpha, reveal);
+  }
+  // Equations in the top-left corner, on a dark backing so the grid never shows through.
+  const FORMULAS = [
+    ['F1', 0, 4.0, 5.2, 8.8, 9.4],
+    ['F2', 0, 9.6, 10.6, 13.8, 14.3],
+    ['F3', 1, 11.0, 12.0, 13.8, 14.3],
+    ['F4', 0, 14.3, 15.3, 16.4, 17.0],
+    ['F5', 0, 19.4, 20.4, 22.9, 23.4],
+    ['F6', 0, 24.6, 25.8, 29.2, 29.8],
+    ['F7', 1, 26.2, 27.2, 29.2, 29.8],
+    ['F8', 0, 29.8, 30.8, 31.6, 32.2],
+    ['F9', 0, 32.4, 33.6, 99, 100]
+  ];
+  function formulas(t) {
+    const fs = Math.max(12, Math.min(28, W * 0.025));
+    const pad = W * 0.03;
+    for (const [key, slot, w0, w1, f0, f1] of FORMULAS) {
+      const it = IMG[key];
+      if (!it) continue;
+      const reveal = E(t, w0, w1), alpha = 1 - E(t, f0, f1);
+      if (reveal <= 0.002 || alpha <= 0.002) continue;
+      const k = fs / BASE, w = it.w * k, h = it.h * k;
+      const x = pad, y = pad + slot * fs * 2.3;
+      ctx.save();
+      ctx.globalAlpha = 0.78 * alpha * Math.min(1, reveal * 3);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(x - fs * 0.4, y - fs * 0.3, w * reveal + fs * 0.8, h + fs * 0.6);
+      ctx.restore();
+      drawTex(key, x, y, fs, alpha, reveal, 'left');
+    }
+  }
+
+  // ---------- the scene, as a pure function of time ----------
+  function scene(t) {
+    const sw = SW();
+    const clean = E(t, 16.2, 17);   // tidy up before the camera moves
+    const fin = E(t, 31.4, 32.2);   // dim everything but the u's at the end
+
+    // Number plane.
+    const ag = E(t, 0, 1.2);
+    const gridA = 0.42 * ag * (1 - 0.72 * E(t, 17, 19.5));
+    const axisA = 0.8 * ag * (1 - E(t, 17, 19.5));   // the x and y axes fade out as the camera tilts
+    for (let i = -6; i <= 9; i++) seg([i, -5, 0], [i, 8, 0], COL.grid, gridA, sw * 0.3);
+    for (let j = -5; j <= 8; j++) seg([-6, j, 0], [9, j, 0], COL.grid, gridA, sw * 0.3);
+    seg([-6, 0, 0], [9, 0, 0], COL.axis, axisA, sw * 0.45);
+    seg([0, -5, 0], [0, 8, 0], COL.axis, axisA, sw * 0.45);
+
+    // The plane V = span(u1, u2), with a grid in u1, u2 coordinates.
+    const pA = E(t, 18.5, 20.5);
+    if (pA > 0.002) {
+      const c = (a, b) => add(mul(U1, a), mul(U2, b));
+      const a0 = -1.6, a1 = 3.9, b0 = -1.4, b1 = 3.0;
+      poly([c(a0, b0), c(a1, b0), c(a1, b1), c(a0, b1)], COL.u, 0.15 * pA, COL.u, 0.85 * pA);
+      for (let a = -1; a <= 3; a++) seg(c(a, b0), c(a, b1), COL.u, 0.28 * pA, sw * 0.3);
+      for (let b = -1; b <= 2; b++) seg(c(a0, b), c(a1, b), COL.u, 0.28 * pA, sw * 0.3);
+    }
+
+    // Line through u1, used while projecting v2.
+    const lineA = 0.5 * E(t, 7.8, 8.4) * (1 - E(t, 13.6, 14.2));
+    seg(mul(U1, -4), mul(U1, 7), COL.guide, lineA, sw * 0.4);
+
+    // ----- step 1: v1 -> u1 -----
+    const g1 = E(t, 1.2, 2.6), n1 = E(t, 3.8, 5.4);
+    const lenU1 = lerp(L1 * g1, 1, n1);
+    arrow(O, V1, COL.v, 0.3 * n1 * (1 - clean));                      // ghost of v1
+
+    // ----- steps 2-4: v2, its projection, u2 -----
+    const g2 = E(t, 6.0, 7.2);
+    const dd = E(t, 8.2, 9.0), dashA = (dd > 0 ? 1 : 0) * (1 - E(t, 11.4, 12.0));
+    seg(V2, lerpV(V2, V2PAR, dd), COL.guide, 0.9 * dashA, sw * 0.5, [sw * 2, sw * 2]);
+    dotAt(V2PAR, COL.guide, E(t, 8.8, 9.1) * (1 - E(t, 12.2, 12.8)));
+    rightMark(V2PAR, mul(U1, -1), U2, COL.mark, 0.85 * E(t, 8.8, 9.3) * (1 - E(t, 12.2, 12.8)));
+    const gp = E(t, 9.2, 10.4);
+    arrow(O, mul(V2PAR, gp), COL.par, (gp > 0 ? 1 : 0) * (1 - clean));
+    arrow(O, mul(V2, g2), COL.v, (g2 > 0 ? 1 : 0) * (1 - clean));
+    const gq = E(t, 10.8, 11.8), s2 = E(t, 12.2, 13.6), n2 = E(t, 14.0, 15.4);
+    const tail2 = mul(V2PAR, 1 - s2), lenU2 = lerp(L2 * gq, 1, n2);
+    arrow(O, V2PERP, COL.perp, 0.3 * n2 * (1 - clean));               // ghost of v2-perp
+    arrow(tail2, add(tail2, mul(U2, lenU2)), mixHex(COL.perp, COL.u, n2), gq > 0 ? 1 : 0);
+    rightMark(O, U1, U2, COL.mark, 0.85 * E(t, 13.4, 14.0));
+
+    // u1 is drawn after v2's pieces so it stays on top.
+    arrow(O, mul(U1, lenU1), mixHex(COL.v, COL.u, n1), g1 > 0 ? 1 : 0);
+
+    // ----- steps 6-8: v3, its projection onto V, u3 -----
+    const g3 = E(t, 21.2, 22.4);
+    const d3 = E(t, 23.0, 24.0), dash3 = (d3 > 0 ? 1 : 0) * (1 - E(t, 26.6, 27.2));
+    seg(V3, lerpV(V3, V3PAR, d3), COL.guide, 0.9 * dash3, sw * 0.5, [sw * 2, sw * 2]);
+    dotAt(V3PAR, COL.guide, E(t, 23.8, 24.1) * (1 - E(t, 27.4, 28)));
+    rightMark(V3PAR, unit(mul(V3PAR, -1)), U3, COL.mark, 0.85 * E(t, 23.8, 24.3) * (1 - E(t, 27.4, 28)));
+    const gp3 = E(t, 24.4, 25.6);
+    arrow(O, mul(V3PAR, gp3), COL.par, (gp3 > 0 ? 1 : 0) * (1 - fin));
+    const gq3 = E(t, 26.0, 27.0), s3 = E(t, 27.6, 28.9), n3 = E(t, 29.4, 30.8);
+    const tail3 = mul(V3PAR, 1 - s3), lenU3 = lerp(L3 * gq3, 1, n3);
+    arrow(O, V3PERP, COL.perp, 0.3 * n3 * (1 - fin));                 // ghost of v3-perp
+    arrow(O, mul(V3, g3), COL.v, (g3 > 0 ? 1 : 0) * (1 - 0.7 * fin));
+    arrow(tail3, add(tail3, mul(U3, lenU3)), mixHex(COL.perp, COL.u, n3), gq3 > 0 ? 1 : 0);
+    const m3 = 0.85 * E(t, 28.6, 29.2);
+    rightMark(O, U1, U3, COL.mark, m3);
+    rightMark(O, U2, U3, COL.mark, m3);
+    // u1 and u2 again on top of v3's pieces once we are in 3D.
+    if (t > 17) {
+      arrow(O, U1, COL.u, 1);
+      arrow(O, U2, COL.u, 1);
+    }
+
+    // ----- labels -----
+    label('v1', O, mul(U1, lenU1), (g1 > 0 ? 1 : 0) * (1 - E(t, 3.8, 4.3)), E(t, 2.3, 3.0));
+    label('v1', O, V1, 0.5 * E(t, 4.6, 5.4) * (1 - clean), 1);
+    label('u1', O, U1, 1, E(t, 4.8, 5.6), [0.15, 0.55]);
+    label('v2', O, mul(V2, Math.max(g2, 0.01)), 1 - clean, E(t, 7.0, 7.6), [0.45, 0]);
+    label('v2par', O, V2PAR, 1 - clean, E(t, 10.0, 10.6), [0.2, 0.9]);
+    label('v2perp', tail2, add(tail2, mul(U2, lenU2)), 1 - E(t, 14.0, 14.5), E(t, 11.4, 12.0), [-0.55, 0.75 * (1 - s2)]);
+    label('u2', O, U2, 1, E(t, 14.9, 15.6), [-0.35, 0]);
+    if (pA > 0.002) {
+      const corner = P(add(mul(U1, 3.9), mul(U2, -1.4)));
+      drawTex('V', corner[0] + labelSize() * 0.9, corner[1], labelSize() * 1.2, pA, E(t, 20.2, 21.0));
+    }
+    label('v3', O, mul(V3, Math.max(g3, 0.01)), 1 - 0.7 * fin, E(t, 22.2, 22.8));
+    label('v3par', O, V3PAR, 1 - fin, E(t, 25.2, 25.8), [0.3, 0.8]);
+    label('v3perp', tail3, add(tail3, mul(U3, lenU3)), 1 - E(t, 29.4, 29.9), E(t, 26.6, 27.2), [-0.9, 0.2]);
+    label('u3', O, U3, 1, E(t, 30.2, 30.9), [-0.55, -0.1]);
+
+    formulas(t);
+  }
+
+  function render() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, H);
+    cam = camera(T);
+    ppu = W / cam.span;
+    scene(T);
+  }
+
+  // ---------- playback ----------
+  let T = 0, playing = false, last = 0, speed = 1;
+  const scrub = document.getElementById('scrub');
+  const timeEl = document.getElementById('time');
+  const playBtn = document.getElementById('btn-play');
+  const icoPlay = document.getElementById('ico-play'), icoPause = document.getElementById('ico-pause');
+  const caption = document.getElementById('caption');
+  const items = [...document.querySelectorAll('#steps li')];
+  const starts = items.map(li => parseFloat(li.dataset.t));
+  let shownStep = -1;
+
+  const fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  const stepAt = t => { let k = 0; starts.forEach((s, i) => { if (t >= s - 1e-6) k = i; }); return k; };
+
+  function syncUI() {
+    scrub.value = T.toFixed(2);
+    timeEl.textContent = fmt(T) + ' / ' + fmt(DUR);
+    const k = stepAt(T);
+    scrub.setAttribute('aria-valuetext', fmt(T) + ' of ' + fmt(DUR) + ', step ' + (k + 1) + ' of ' + items.length);
+    if (k !== shownStep) {
+      shownStep = k;
+      items.forEach((li, i) => i === k ? li.setAttribute('aria-current', 'step') : li.removeAttribute('aria-current'));
+      const src = items[k];
+      caption.innerHTML = '<span class="num">STEP ' + (k + 1) + ' OF ' + items.length + '</span>' +
+        src.querySelector('.st-text').innerHTML;
+    }
+  }
+  function setPlaying(p) {
+    playing = p;
+    playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
+    icoPlay.hidden = p; icoPause.hidden = !p;
+    if (p) { if (T >= DUR - 0.01) T = 0; last = performance.now(); requestAnimationFrame(tick); }
+  }
+  function tick(now) {
+    if (!playing) return;
+    T = Math.min(DUR, T + (now - last) / 1000 * speed);
+    last = now;
+    render(); syncUI();
+    if (T >= DUR) { setPlaying(false); return; }
+    requestAnimationFrame(tick);
+  }
+  function seek(t) { T = Math.max(0, Math.min(DUR, t)); last = performance.now(); render(); syncUI(); }
+  function goStep(k) { k = Math.max(0, Math.min(items.length - 1, k)); seek(starts[k] + 0.001); }
+
+  playBtn.addEventListener('click', () => setPlaying(!playing));
+  document.getElementById('btn-restart').addEventListener('click', () => { seek(0); setPlaying(true); });
+  document.getElementById('btn-prev').addEventListener('click', () => {
+    const k = stepAt(T);
+    goStep(T - starts[k] > 1.0 ? k : k - 1);
+  });
+  document.getElementById('btn-next').addEventListener('click', () => goStep(stepAt(T) + 1));
+  scrub.addEventListener('input', () => seek(parseFloat(scrub.value)));
+  document.getElementById('speed').addEventListener('change', e => { speed = parseFloat(e.target.value); });
+  items.forEach((li, i) => li.querySelector('button').addEventListener('click', () => goStep(i)));
+  document.addEventListener('keydown', e => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (e.key === ' ' && !['button', 'input', 'select', 'textarea'].includes(tag)) {
+      e.preventDefault(); setPlaying(!playing);
+    } else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !['input', 'select', 'textarea'].includes(tag)) {
+      e.preventDefault();
+      document.getElementById(e.key === 'ArrowLeft' ? 'btn-prev' : 'btn-next').click();
+    }
+  });
+
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.max(1, r.width); H = W * 9 / 16;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    render();
+  }
+  new ResizeObserver(resize).observe(cv);
+  resize(); syncUI();
+
+  // ---------- start once the labels are typeset ----------
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let started = false;
+  function start(ok) {
+    if (started) return;
+    started = true;
+    const note = document.getElementById('loading');
+    if (ok) note.hidden = true;
+    else note.textContent = 'The math labels could not load, so the animation plays without them.';
+    render(); syncUI();
+    window.__gsSeek = seek;  // used only for previews
+    if (!reduce) setPlaying(true);
+  }
+  async function prepare() {
+    try {
+      await MathJax.typesetPromise([document.querySelector('.wrap')]);
+      shownStep = -1; syncUI();
+      const keys = Object.keys(TEX);
+      const imgs = await Promise.all(keys.map(k => texToImage(TEX[k])));
+      keys.forEach((k, i) => { if (imgs[i]) IMG[k] = imgs[i]; });
+      start(true);
+    } catch (err) {
+      start(false);
+    }
+  }
+  if (window.__mjDone) prepare();
+  else window.__mjReady = prepare;
+  setTimeout(() => start(false), 15000);
+})();
+</script>
+
+</body>
+</html>
