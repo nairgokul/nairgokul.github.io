@@ -15,6 +15,24 @@ window.SITE_CONTENT = {
 
 news: [
   {
+    "date": "October 21, 2026",
+    "title": "U-M releases guiding principles for the use of artificial intelligence",
+    "summary": "U-M has finalized six guiding principles for AI in teaching, learning, research, and operations. Developed through campus consultation, they emphasize human judgment, critical thinking, integrity, transparency, and privacy; they provide shared guidance rather than a new policy.",
+    "url": "https://record.umich.edu/articles/u-m-releases-guiding-principles-for-the-use-of-artificial-intelligence/"
+  },
+  {
+    "date": "October 18, 2026",
+    "title": "Francesco Maggi considers a golden age or a dark age for mathematics",
+    "summary": "In a guest essay on Terence Tao’s blog, Francesco Maggi argues that AI-assisted mathematics should strengthen human understanding, independent scrutiny, and opportunities for young researchers. He proposes ways to preserve an open scientific community as AI-generated proofs become more common.",
+    "url": "https://terrytao.wordpress.com/2026/10/18/will-it-be-a-golden-age-or-a-dark-age-for-mathematics-and-science/"
+  },
+  {
+    "date": "October 16, 2026",
+    "title": "SAIR Open Math OS launches tools for collaborative mathematics",
+    "summary": "Terence Tao announces the soft launch of SAIR Open Math OS, offering open AI models for Lean formalization and mathematical discussion, with shared team prompts and donated compute for academic users. The early service remains below frontier-model capabilities.",
+    "url": "https://terrytao.wordpress.com/2026/10/16/sair-open-math-os-released/"
+  },
+  {
     "date": "October 9, 2026",
     "title": "Thomas Hales examines Lean reliability and AI-generated proofs",
     "summary": "In a guest post on Terence Tao’s blog, Thomas Hales discusses Lean’s foundations, soundness bugs, and AI-assisted formalization. He emphasizes kernel checking, human audits of theorem statements, and independent verification rather than blind trust in formal proofs.",
