@@ -15,10 +15,40 @@ window.SITE_CONTENT = {
 
 news: [
   {
+    "date": "November 1, 2026",
+    "title": "Frank Calegari proposes changes to mathematical practice in the AI era",
+    "summary": "In a guest essay on Terence Tao’s blog, Frank Calegari proposes changes to hiring, journals, graduate education, and research evaluation. He argues for rewarding human understanding, broader research programs, and ambitious questions as AI changes the production of proofs.",
+    "url": "https://terrytao.wordpress.com/2026/11/01/mathematics-has-changed-lets-act-like-it/"
+  },
+  {
+    "date": "October 30, 2026",
+    "title": "Harvard summit publishes recommendations for math research in the age of AI",
+    "summary": "Organizers Dan Freed, Larry Guth, Bryna Kra, Emily Riehl, and Mohammed Abouzaid share recommendations from a 32-person Harvard CMSA summit. The report calls for support for early-career researchers, recognition of exposition and shared tools, and expert-guided formal libraries.",
+    "url": "https://cmsa.fas.harvard.edu/media/2026/10/Summit-on-Math-Research-in-the-Age-of-AI.pdf"
+  },
+  {
+    "date": "October 29, 2026",
+    "title": "Early-career researchers share their perspectives on AI in mathematics",
+    "summary": "Anna Brandenberger, Hanna Mularczyk, and Dora Woodruff report anonymous survey responses from graduate students and postdocs at nearly 60 institutions in at least five countries. The preprint documents experiences and concerns, giving early-career mathematicians a voice in debates about AI.",
+    "url": "https://arxiv.org/pdf/2610.40584"
+  },
+  {
+    "date": "October 27, 2026",
+    "title": "AHM publishes recommendations for doctoral advising in mathematics",
+    "summary": "The Association for Human Mathematics teaching working group recommends written AI-use agreements, regularly reviewed by doctoral students and their committees. Its report advocates predominantly AI-free doctoral work, clear expectations, recognition of student progress, and supportive advising.",
+    "url": "https://www.ahmath.org/doctoraladvising"
+  },
+  {
     "date": "October 21, 2026",
     "title": "U-M releases guiding principles for the use of artificial intelligence",
     "summary": "U-M has finalized six guiding principles for AI in teaching, learning, research, and operations. Developed through campus consultation, they emphasize human judgment, critical thinking, integrity, transparency, and privacy; they provide shared guidance rather than a new policy.",
     "url": "https://record.umich.edu/articles/u-m-releases-guiding-principles-for-the-use-of-artificial-intelligence/"
+  },
+  {
+    "date": "October 20, 2026",
+    "title": "Kentucky mathematics proposes written AI agreements for doctoral advising",
+    "summary": "A University of Kentucky mathematics policy proposal calls for students, advisors, and dissertation committees to agree in writing on permitted AI use and review the agreement annually. It recommends substantial independent dissertation work and an AI disclosure statement.",
+    "url": "https://math.as.uky.edu/sites/default/files/UKMath_AI_advising_policy_Fall2026.pdf"
   },
   {
     "date": "October 18, 2026",
@@ -43,6 +73,12 @@ news: [
     "title": "Álvaro Lozano-Robledo offers students advice on mathematics in the AI era",
     "summary": "Writing on Terence Tao’s blog, Álvaro Lozano-Robledo encourages students to keep studying mathematics and emphasizes human understanding, research, and communication. His essay offers a hopeful personal perspective while acknowledging uncertainty about AI’s impact on mathematical careers.",
     "url": "https://terrytao.wordpress.com/2026/10/08/what-should-we-tell-our-students/"
+  },
+  {
+    "date": "October 8, 2026",
+    "title": "Maximilian Kaipel proposes transparent AI disclosures in mathematics research",
+    "summary": "Kaipel proposes human accountability, specific disclosures, and records of relevant AI interactions, alongside a mathematics task taxonomy and LaTeX package. The manuscript declares no AI use. The date shown is the PDF’s creation date; a publication date is not stated.",
+    "url": "https://kaipel.net/maximilian/files/transparentAIdisclosure.pdf"
   },
   {
     "date": "October 6, 2026",
@@ -121,6 +157,12 @@ news: [
     "title": "OpenAI announces a proposed Navier–Stokes solution",
     "summary": "OpenAI reports an AI-generated proof of finite-time blowup for the three-dimensional Navier–Stokes equations with smooth external forcing. A manuscript and Lean formalization are public; independent acceptance was not established in this digest.",
     "url": "https://openai.com/index/navier-stokes-solution/"
+  },
+  {
+    "date": "January 19, 2026",
+    "title": "Ploum reflects on university exams with optional chatbot use",
+    "summary": "Ploum describes an open-resource exam requiring students who use chatbots to disclose prompts and take responsibility for errors. Most opted out. This personal teaching account explores assessment and student understanding; it is not a controlled study of AI’s effects on learning.",
+    "url": "https://ploum.net/2026-01-19-exam-with-chatbots.html"
   }
 ],
 
