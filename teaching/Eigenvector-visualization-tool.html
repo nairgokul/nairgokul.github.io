@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2×2 Linear Map Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: input plane -> the matrix as the operator between them -> output plane.
+   Matrix columns wear the colors of the basis images they produce. */
+:root {
+  --bg: #e9edec;
+  --panel: #fbfcfc;
+  --ink: #17212b;
+  --muted: #4f5b67;
+  --rule: #c3ccd0;
+  --e1: #b4400a;
+  --e2: #0a62a0;
+  --eig: #c8a000;
+  --err: #a8201a;
+  --math: "STIX Two Text", "STIX Two Math", "Times New Roman", serif;
+  --ui: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151b; --panel: #171e26; --ink: #e8edf1; --muted: #a9b5c0; --rule: #36434f;
+    --e1: #ff9a5c; --e2: #6cbcf5; --eig: #ffd54a; --err: #ff8d85;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151b; --panel: #171e26; --ink: #e8edf1; --muted: #a9b5c0; --rule: #36434f;
+  --e1: #ff9a5c; --e2: #6cbcf5; --eig: #ffd54a; --err: #ff8d85;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--ui); }
+.page { max-width: 1560px; margin: 0 auto; padding: 18px 20px 32px; display: grid; gap: 16px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--e2); outline-offset: 2px; }
+
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 28px; }
+.eyebrow { margin: 0; color: var(--muted); font-size: 13px; }
+h1 { margin: 0; font: 600 30px/1.15 var(--math); text-wrap: balance; }
+.how { margin: 3px 0 0; color: var(--muted); }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.presets > span { color: var(--muted); font-size: 13px; margin-right: 2px; }
+.btn {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 4px;
+  padding: 5px 10px; cursor: pointer; font-size: 13.5px; font-weight: 500;
+}
+.btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 16px; align-items: center; }
+.panel { margin: 0; min-width: 0; }
+.panel figcaption { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 40px; padding-bottom: 6px; }
+.tools { display: flex; flex-wrap: wrap; justify-content: end; gap: 6px; }
+.panel h2 { margin: 0; font: 600 19px/1.2 var(--math); }
+.plane {
+  display: block; width: 100%; max-width: max(420px, 78vh); aspect-ratio: 1; margin-inline: auto;
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; user-select: none; -webkit-user-select: none;
+}
+#planeL { cursor: crosshair; touch-action: manipulation; }
+
+/* plane marks */
+.gv { stroke: var(--e2); stroke-opacity: .34; stroke-width: 1; }
+.gh { stroke: var(--e1); stroke-opacity: .34; stroke-width: 1; }
+.ref { stroke: var(--muted); stroke-opacity: .13; stroke-width: 1; }
+.collapse { stroke: var(--ink); stroke-width: 2.4; }
+.origin { fill: var(--ink); }
+.eig { stroke: var(--eig); stroke-width: 2; stroke-dasharray: 0.1 6; stroke-linecap: round; }
+.tick { font: 12px var(--ui); fill: var(--muted); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--panel); stroke-width: 3; }
+.lbl { font: italic 500 18px var(--math); paint-order: stroke; stroke: var(--panel); stroke-width: 4; stroke-linejoin: round; }
+.lbl.ghost { font: 13px var(--ui); fill: var(--muted); }
+.a-v line { stroke: var(--ink); } .a-v polygon, .a-v circle, .lbl.a-v { fill: var(--ink); }
+.a-ghost line { stroke: var(--muted); stroke-dasharray: 5 4; } .a-ghost polygon, .a-ghost circle { fill: var(--muted); }
+.arrow line { stroke-width: 3.2; stroke-linecap: butt; }
+
+/* matrix between the planes */
+.op { display: grid; justify-items: center; gap: 6px; }
+.matrix { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; gap: 2px 8px; }
+.aeq { font: italic 30px var(--math); }
+.bracket { position: relative; padding: 6px 13px; }
+.bracket::before, .bracket::after { content: ""; position: absolute; top: 0; bottom: 0; width: 9px; border: 2px solid var(--ink); }
+.bracket::before { left: 0; border-right: 0; }
+.bracket::after { right: 0; border-left: 0; }
+.cells { display: grid; grid-template-columns: 76px 76px; gap: 5px; }
+.cells input {
+  width: 100%; height: 50px; text-align: center; font: 500 25px var(--math);
+  border: 1px solid transparent; border-bottom-color: currentColor; border-radius: 3px 3px 0 0;
+}
+.cells input.long { font-size: 15px; font-family: var(--ui); }
+.cells input.c1 { color: var(--e1); background: color-mix(in srgb, var(--e1) 10%, var(--panel)); }
+.cells input.c2 { color: var(--e2); background: color-mix(in srgb, var(--e2) 10%, var(--panel)); }
+.cells input[aria-invalid="true"] { border: 2px solid var(--err); }
+.error { margin: 0; max-width: 240px; color: var(--err); font-size: 13.5px; font-weight: 500; }
+.error:empty { display: none; }
+
+.eiginfo { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 40px; }
+.eiginfo[hidden] { display: none; }
+.eiginfo p { margin: 0; font: 20px/1.35 var(--math); }
+
+@media (max-width: 1060px) {
+  .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .op { grid-column: 1 / -1; grid-row: 1; }
+}
+@media (max-width: 640px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  h1 { font-size: 25px; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <div>
+      <p class="eyebrow">Math 214 · Linear Algebra</p>
+      <h1>2×2 Linear Map Explorer</h1>
+      <p class="how">Click the input plane to place a vector. Drag a tip to move it. Click a tip to remove it.</p>
+    </div>
+    <div class="presets" id="presets" role="group" aria-label="Example matrices"><span>Examples</span></div>
+  </header>
+
+  <div class="stage">
+    <figure class="panel">
+      <figcaption><h2>Input plane</h2><div class="tools"><button class="btn" id="eigToggle" type="button" aria-pressed="false">Show eigenvectors</button><button class="btn" id="clear" type="button" aria-label="Clear all vectors">Clear all</button></div></figcaption>
+      <svg class="plane" id="planeL" viewBox="0 0 480 480" role="img"><g id="baseL"></g><g id="topL"></g></svg>
+    </figure>
+
+    <section class="op" aria-label="Matrix A">
+      <div class="matrix">
+        <span class="aeq">A =</span>
+        <div class="bracket">
+          <div class="cells" role="group" aria-label="Entries of matrix A">
+            <input id="a11" class="c1" aria-label="Row 1, column 1" autocomplete="off" spellcheck="false">
+            <input id="a12" class="c2" aria-label="Row 1, column 2" autocomplete="off" spellcheck="false">
+            <input id="a21" class="c1" aria-label="Row 2, column 1" autocomplete="off" spellcheck="false">
+            <input id="a22" class="c2" aria-label="Row 2, column 2" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+      </div>
+      <p class="error" id="matErr" role="alert"></p>
+    </section>
+
+    <figure class="panel">
+      <figcaption><h2>Output plane</h2></figcaption>
+      <svg class="plane" id="planeR" viewBox="0 0 480 480" role="img"><g id="baseR"></g><g id="topR"></g></svg>
+    </figure>
+  </div>
+
+  <section class="eiginfo" id="eigInfo" aria-label="Eigenvectors and eigenvalues" hidden></section>
+  <div class="sr" id="live" aria-live="polite"></div>
+</main>
+
+<script>
+'use strict';
+const S = 480;
+const MAX_LINES = 120;
+const PRESETS = [
+  ['Two eigenlines', ['3', '1', '0', '2']],
+  ['Shear', ['1', '1', '0', '1']],
+  ['Rotation 30°', ['cos(pi/6)', '-sin(pi/6)', 'sin(pi/6)', 'cos(pi/6)']],
+  ['Reflection', ['0', '1', '1', '0']],
+  ['Projection', ['1/2', '1/2', '1/2', '1/2']],
+  ['Scale by 2', ['2', '0', '0', '2']],
+];
+const state = {
+  raw: ['3', '1', '0', '2'], A: [3, 1, 0, 2], eig: null, N: 5, vecs: [], hover: null, showEig: false,
+};
+const $ = id => document.getElementById(id);
+
+/* ---------- arithmetic ---------- */
+function parseExpr(src) {
+  const t = String(src).replace(/\s+/g, '').replace(/−/g, '-').replace(/π/g, 'pi').replace(/√/g, 'sqrt').toLowerCase();
+  if (!t) return null;
+  let i = 0;
+  const FN = { sqrt: Math.sqrt, sin: Math.sin, cos: Math.cos, tan: Math.tan };
+  const fail = () => { throw new Error('parse'); };
+  function expr() {
+    let v = term();
+    while (t[i] === '+' || t[i] === '-') { const o = t[i++], r = term(); v = o === '+' ? v + r : v - r; }
+    return v;
+  }
+  function term() {
+    let v = unary();
+    for (;;) {
+      if (t[i] === '*' || t[i] === '/') { const o = t[i++], r = unary(); v = o === '*' ? v * r : v / r; }
+      else if (i < t.length && /[a-z(]/.test(t[i])) v *= power();
+      else return v;
+    }
+  }
+  function unary() {
+    if (t[i] === '-') { i++; return -unary(); }
+    if (t[i] === '+') { i++; return unary(); }
+    return power();
+  }
+  function power() {
+    const b = atom();
+    if (t[i] === '^') { i++; return Math.pow(b, unary()); }
+    return b;
+  }
+  function atom() {
+    if (t[i] === '(') { i++; const v = expr(); if (t[i++] !== ')') fail(); return v; }
+    const num = /\d+(\.\d*)?|\.\d+/y; num.lastIndex = i;
+    let m = num.exec(t);
+    if (m) { i += m[0].length; return parseFloat(m[0]); }
+    const word = /[a-z]+/y; word.lastIndex = i;
+    m = word.exec(t);
+    if (!m) fail();
+    i += m[0].length;
+    if (m[0] === 'pi') return Math.PI;
+    if (FN[m[0]]) return FN[m[0]](atom());
+    return fail();
+  }
+  try {
+    const v = expr();
+    if (i !== t.length || !Number.isFinite(v)) return null;
+    return Math.abs(v) < 1e-12 ? 0 : v;
+  } catch (e) { return null; }
+}
+
+function fmt(x) {
+  const r = Math.round(x * 1000) / 1000;
+  return r === 0 ? '0' : String(r).replace('-', '−');
+}
+const pair = v => `(${fmt(v[0])}, ${fmt(v[1])})`;
+const sub = n => String(n).replace(/\d/g, d => '₀₁₂₃₄₅₆₇₈₉'[d]);
+const mul = (A, v) => [A[0] * v[0] + A[1] * v[1], A[2] * v[0] + A[3] * v[1]];
+const matScale = A => Math.max(...A.map(Math.abs));
+const det = A => A[0] * A[3] - A[1] * A[2];
+
+function rank(A) {
+  const s = matScale(A);
+  if (s < 1e-12) return 0;
+  return Math.abs(det(A)) <= 1e-10 * s * s ? 1 : 2;
+}
+
+function eigenline(A, lam) {
+  const r1 = [A[0] - lam, A[1]], r2 = [A[2], A[3] - lam];
+  const r = Math.hypot(...r1) >= Math.hypot(...r2) ? r1 : r2;
+  let v = [-r[1], r[0]];
+  const n = Math.hypot(...v);
+  const d = [v[0] / n, v[1] / n];
+  const m = Math.max(Math.abs(d[0]), Math.abs(d[1]));
+  let u = [d[0] / m, d[1] / m];
+  if (u[0] < -1e-9 || (Math.abs(u[0]) <= 1e-9 && u[1] < 0)) u = [-u[0], -u[1]];
+  return { lam, d, u };
+}
+
+function eigen(A) {
+  const [a, b, c, d] = A, s = matScale(A);
+  if (s < 1e-12) return { kind: 'scalar', lam: 0, lines: [] };
+  if (Math.abs(b) <= 1e-9 * s && Math.abs(c) <= 1e-9 * s && Math.abs(a - d) <= 1e-9 * s) {
+    return { kind: 'scalar', lam: (a + d) / 2, lines: [] };
+  }
+  const tr = a + d, disc = (a - d) * (a - d) + 4 * b * c;
+  if (disc < -1e-10 * s * s) return { kind: 'complex', re: tr / 2, im: Math.sqrt(-disc) / 2, lines: [] };
+  if (Math.abs(disc) <= 1e-10 * s * s) return { kind: 'defective', lam: tr / 2, lines: [eigenline(A, tr / 2)] };
+  const root = Math.sqrt(disc), D = det(A);
+  let l1, l2;
+  if (tr >= 0) { l1 = (tr + root) / 2; l2 = D / l1; } else { l2 = (tr - root) / 2; l1 = D / l2; }
+  if (l1 < l2) [l1, l2] = [l2, l1];
+  return { kind: 'two', lines: [eigenline(A, l1), eigenline(A, l2)] };
+}
+
+/* ---------- plane geometry ---------- */
+const X = x => (x + state.N) / (2 * state.N) * S;
+const Y = y => (state.N - y) / (2 * state.N) * S;
+const unit = () => S / (2 * state.N);
+function gridStep(N) { return N <= 2 ? 0.5 : N <= 10 ? 1 : N <= 20 ? 2 : N <= 50 ? 5 : 10; }
+const n2 = v => v.toFixed(2);
+
+function clip(p, d, N) {
+  let a = -Infinity, b = Infinity;
+  for (const i of [0, 1]) {
+    if (Math.abs(d[i]) < 1e-12) { if (Math.abs(p[i]) > N) return null; continue; }
+    let t1 = (-N - p[i]) / d[i], t2 = (N - p[i]) / d[i];
+    if (t1 > t2) [t1, t2] = [t2, t1];
+    a = Math.max(a, t1); b = Math.min(b, t2);
+  }
+  if (!(a < b)) return null;
+  return [[p[0] + a * d[0], p[1] + a * d[1]], [p[0] + b * d[0], p[1] + b * d[1]]];
+}
+function seg(s, cls) {
+  return `<line class="${cls}" x1="${n2(X(s[0][0]))}" y1="${n2(Y(s[0][1]))}" x2="${n2(X(s[1][0]))}" y2="${n2(Y(s[1][1]))}"/>`;
+}
+function linesFor(M, clsV, clsH) {
+  const N = state.N, g = gridStep(N), c1 = [M[0], M[2]], c2 = [M[1], M[3]];
+  const D = det(M);
+  const inv = [M[3] / D, -M[1] / D, -M[2] / D, M[0] / D];
+  const pre = [[-N, -N], [N, -N], [N, N], [-N, N]].map(p => mul(inv, p));
+  let out = '';
+  const family = (lo, hi, base, dir, cls) => {
+    const kLo = Math.ceil(lo / g), kHi = Math.floor(hi / g);
+    const stride = Math.max(1, Math.ceil((kHi - kLo + 1) / MAX_LINES));
+    for (let k = Math.ceil(kLo / stride) * stride; k <= kHi; k += stride) {
+      const s = clip([k * g * base[0], k * g * base[1]], dir, N);
+      if (s) out += seg(s, cls + (k === 0 ? ' ax' : ''));
+    }
+  };
+  const xs = pre.map(p => p[0]), ys = pre.map(p => p[1]);
+  family(Math.min(...xs), Math.max(...xs), c1, c2, clsV);
+  family(Math.min(...ys), Math.max(...ys), c2, c1, clsH);
+  return out;
+}
+function ticks() {
+  const N = state.N; let g = gridStep(N);
+  while (g * unit() < 36) g *= 2;
+  let out = '';
+  for (let k = g; k < N - 1e-9; k += g) {
+    for (const s of [1, -1]) {
+      const v = s * k;
+      out += `<text class="tick" x="${n2(X(v))}" y="${n2(Y(0) + 16)}" text-anchor="middle">${fmt(v)}</text>`;
+      out += `<text class="tick" x="${n2(X(0) - 7)}" y="${n2(Y(v) + 4)}" text-anchor="end">${fmt(v)}</text>`;
+    }
+  }
+  return out;
+}
+function eigenMarks() {
+  if (!state.showEig) return '';
+  const e = state.eig;
+  const dirs = e.kind === 'scalar'
+    ? Array.from({ length: 12 }, (_, i) => [Math.cos(i * Math.PI / 12), Math.sin(i * Math.PI / 12)])
+    : e.lines.map(l => l.d);
+  return dirs.map(d => seg(clip([0, 0], d, state.N), 'eig')).join('');
+}
+function drawBase() {
+  const A = state.A, I = [1, 0, 0, 1];
+  $('baseL').innerHTML = linesFor(I, 'gv', 'gh') + ticks() + eigenMarks();
+  let R = linesFor(I, 'ref', 'ref') + ticks();
+  const r = rank(A);
+  if (r === 2) R += linesFor(A, 'gv', 'gh');
+  else if (r === 1) {
+    const c1 = [A[0], A[2]], c2 = [A[1], A[3]];
+    const c = Math.hypot(...c1) >= Math.hypot(...c2) ? c1 : c2;
+    R += seg(clip([0, 0], c, state.N), 'collapse');
+  } else R += `<circle class="origin" cx="${n2(X(0))}" cy="${n2(Y(0))}" r="4"/>`;
+  R += eigenMarks();
+  $('baseR').innerHTML = R;
+}
+
+function arrow(tip, cls) {
+  const ox = X(0), oy = Y(0), sx = X(tip[0]), sy = Y(tip[1]);
+  const dx = sx - ox, dy = sy - oy, len = Math.hypot(dx, dy);
+  if (len < 2) return `<g class="${cls}"><circle cx="${n2(ox)}" cy="${n2(oy)}" r="5"/></g>`;
+  const ux = dx / len, uy = dy / len, h = Math.min(13, len * 0.6), w = h * 0.48;
+  const bx = sx - ux * h, by = sy - uy * h;
+  return `<g class="arrow ${cls}"><line x1="${n2(ox)}" y1="${n2(oy)}" x2="${n2(bx + ux)}" y2="${n2(by + uy)}"/>` +
+    `<polygon points="${n2(sx)},${n2(sy)} ${n2(bx - uy * w)},${n2(by + ux * w)} ${n2(bx + uy * w)},${n2(by - ux * w)}"/></g>`;
+}
+function placeLabel(keep, cands, text, size) {
+  const w = text.length * size * 0.55, h = size * 1.2;
+  const box = c => ({ l: c[0] - w / 2, r: c[0] + w / 2, t: c[1] - h / 2, b: c[1] + h / 2 });
+  const inside = b => b.l >= 3 && b.r <= S - 3 && b.t >= 3 && b.b <= S - 3;
+  const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+  for (const c of cands) {
+    const b = box(c);
+    if (inside(b) && !keep.some(k => hit(k, b))) { keep.push(b); return c; }
+  }
+  const fallback = cands.find(c => inside(box(c)));
+  if (fallback) keep.push(box(fallback));
+  return fallback || null;
+}
+function textAt(c, cls, text) {
+  return `<text class="${cls}" x="${n2(c[0])}" y="${n2(c[1])}" text-anchor="middle" dominant-baseline="central">${text}</text>`;
+}
+function tipCands(tip, text, size) {
+  const sx = X(tip[0]), sy = Y(tip[1]);
+  const base = Math.hypot(sx - X(0), sy - Y(0)) < 2 ? -Math.PI / 4 : Math.atan2(sy - Y(0), sx - X(0));
+  const halfW = text.length * size * 0.275;
+  const angles = [0, 0.7, -0.7, 1.4, -1.4, 2.2, -2.2, Math.PI];
+  return [1, 1.9, 2.8].flatMap(ring => angles.map(o => {
+    const a = base + o;
+    return [sx + Math.cos(a) * (11 + halfW) * ring, sy + Math.sin(a) * 15 * ring];
+  }));
+}
+function drawPlane(right) {
+  const A = state.A, N = state.N, map = right ? (v => mul(A, v)) : (v => v);
+  const inView = p => Math.abs(p[0]) <= N && Math.abs(p[1]) <= N;
+  const items = [
+    ...state.vecs.map(o => ({ tip: map(o.v), cls: 'a-v', text: (right ? 'Av' : 'v') + sub(o.id) })),
+  ];
+  const keep = items.filter(i => inView(i.tip)).map(i => {
+    const x = X(i.tip[0]), y = Y(i.tip[1]);
+    return { l: x - 6, r: x + 6, t: y - 6, b: y + 6 };
+  });
+  let arrows = items.map(i => arrow(i.tip, i.cls)).join('');
+  if (state.hover) arrows += arrow(map(state.hover), 'a-ghost');
+  let labels = '';
+  for (const i of items) {
+    if (!inView(i.tip)) continue;
+    const c = placeLabel(keep, tipCands(i.tip, i.text, 18), i.text, 18);
+    if (c) labels += textAt(c, 'lbl ' + i.cls, i.text);
+  }
+  if (state.hover && inView(map(state.hover))) {
+    const p = map(state.hover), text = pair(p);
+    const c = placeLabel(keep, tipCands(p, text, 13), text, 13);
+    if (c) labels += textAt(c, 'lbl ghost', text);
+  }
+  $(right ? 'topR' : 'topL').innerHTML = arrows + labels;
+}
+function drawTop() { drawPlane(false); drawPlane(true); }
+
+/* ---------- preset state and descriptions ---------- */
+function syncPresets() {
+  document.querySelectorAll('#presets .btn').forEach(b => {
+    b.setAttribute('aria-pressed', String(PRESETS[+b.dataset.i][1].join() === state.raw.join()));
+  });
+}
+function cplx(re, im) {
+  const r = fmt(re), m = fmt(Math.abs(im)), imag = (m === '1' ? '' : m) + 'i';
+  if (r === '0') return (im < 0 ? '−' : '') + imag;
+  return r + (im < 0 ? ' − ' : ' + ') + imag;
+}
+function renderEigInfo() {
+  const box = $('eigInfo'), e = state.eig, A = state.A;
+  box.hidden = !state.showEig;
+  if (!state.showEig) return;
+  const row = (lam, vec) => `<p>λ = ${lam}, eigenvector ${vec}</p>`;
+  if (e.kind === 'two') box.innerHTML = e.lines.map(l => row(fmt(l.lam), pair(l.u))).join('');
+  else if (e.kind === 'defective') box.innerHTML = row(fmt(e.lam) + ' (repeated)', pair(e.lines[0].u));
+  else if (e.kind === 'scalar') box.innerHTML = `<p>λ = ${fmt(e.lam)} (repeated), every nonzero vector is an eigenvector</p>`;
+  else {
+    const x = (e.re - A[0]) / A[1], y = e.im / A[1];
+    box.innerHTML = row(cplx(e.re, e.im), `(1, ${cplx(x, y)})`) + row(cplx(e.re, -e.im), `(1, ${cplx(x, -y)})`) +
+      '<p>Complex, so there are no real lines to draw</p>';
+  }
+}
+function describe() {
+  const A = state.A, e = state.eig;
+  const eigText = !state.showEig ? '' : e.kind === 'two' ? `Eigenvalues ${fmt(e.lines[0].lam)} and ${fmt(e.lines[1].lam)} with eigenlines spanned by ${pair(e.lines[0].u)} and ${pair(e.lines[1].u)}.`
+    : e.kind === 'defective' ? `Repeated eigenvalue ${fmt(e.lam)} with one eigenline spanned by ${pair(e.lines[0].u)}.`
+    : e.kind === 'scalar' ? `Every nonzero vector is an eigenvector with eigenvalue ${fmt(e.lam)}.`
+    : `No real eigenvectors. Eigenvalues ${fmt(e.re)} plus or minus ${fmt(e.im)} i.`;
+  const placed = state.vecs.map(o => `v${o.id} = ${pair(o.v)}`).join(', ');
+  const images = state.vecs.map(o => `A v${o.id} = ${pair(mul(A, o.v))}`).join(', ');
+  $('planeL').setAttribute('aria-label', `Input plane from minus ${state.N} to ${state.N} with e1, e2 and the square grid. ${eigText} ${placed ? 'Placed vectors: ' + placed + '.' : ''}`);
+  $('planeR').setAttribute('aria-label', `Output plane. A e1 = ${pair([A[0], A[2]])}, A e2 = ${pair([A[1], A[3]])}. Determinant ${fmt(det(A))}. ${eigText} ${images ? 'Images: ' + images + '.' : ''}`);
+  return `A e1 = ${pair([A[0], A[2]])}, A e2 = ${pair([A[1], A[3]])}. ${eigText}`;
+}
+function say(msg) { $('live').textContent = msg; }
+function refreshVectors() { drawTop(); describe(); }
+function refreshAll() { state.eig = eigen(state.A); drawBase(); syncPresets(); renderEigInfo(); refreshVectors(); }
+
+/* ---------- matrix input ---------- */
+const cells = ['a11', 'a12', 'a21', 'a22'].map($);
+let sayTimer;
+function fitCellText() { cells.forEach(el => el.classList.toggle('long', el.value.length > 5)); }
+function applyMatrix(showErrors) {
+  const vals = state.raw.map(parseExpr), bad = vals.some(v => v === null);
+  cells.forEach((el, i) => el.setAttribute('aria-invalid', String(showErrors && vals[i] === null)));
+  fitCellText();
+  if (bad) {
+    if (showErrors) $('matErr').textContent = 'Each entry needs a number, such as 1.5, 3/4 or sqrt(2)/2. The planes still show the last valid matrix.';
+    return false;
+  }
+  $('matErr').textContent = '';
+  state.A = vals;
+  refreshAll();
+  clearTimeout(sayTimer);
+  sayTimer = setTimeout(() => say(describe()), 700);
+  return true;
+}
+cells.forEach((el, i) => {
+  el.addEventListener('input', () => { state.raw[i] = el.value; applyMatrix(false); });
+  el.addEventListener('change', () => applyMatrix(true));
+  el.addEventListener('focus', () => el.select());
+});
+function syncCells() { cells.forEach((el, i) => { el.value = state.raw[i]; }); fitCellText(); }
+
+PRESETS.forEach((p, i) => {
+  const b = document.createElement('button');
+  b.className = 'btn'; b.type = 'button'; b.dataset.i = i; b.textContent = p[0];
+  b.addEventListener('click', () => {
+    state.raw = p[1].slice(); syncCells();
+    applyMatrix(true);
+  });
+  $('presets').appendChild(b);
+});
+/* ---------- placing vectors ---------- */
+function addVector(v) {
+  if (Math.hypot(...v) < 1e-9) { say('The zero vector maps to itself, so nothing was added.'); return false; }
+  if (state.vecs.some(o => Math.hypot(o.v[0] - v[0], o.v[1] - v[1]) < 1e-9)) { say('That vector is already placed.'); return false; }
+  let id = 1;
+  while (state.vecs.some(o => o.id === id)) id++;
+  state.vecs.push({ id, v });
+  refreshVectors();
+  say(`Placed v${id} = ${pair(v)}. A v${id} = ${pair(mul(state.A, v))}.`);
+  return true;
+}
+function removeVector(id) {
+  state.vecs = state.vecs.filter(o => o.id !== id);
+  refreshVectors();
+  say(`Removed v${id}.`);
+}
+const L = $('planeL');
+function viewPoint(ev) {
+  const p = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(L.getScreenCTM().inverse());
+  return { x: p.x, y: p.y };
+}
+const toMath = p => [p.x / unit() - state.N, state.N - p.y / unit()];
+function tipAt(p) {
+  for (let i = state.vecs.length - 1; i >= 0; i--) {
+    const v = state.vecs[i].v;
+    if (Math.hypot(X(v[0]) - p.x, Y(v[1]) - p.y) <= 13) return state.vecs[i];
+  }
+  return null;
+}
+function snapped(m) {
+  const round = m.map(c => Math.round(c * 100) / 100);
+  const u = unit(), g = gridStep(state.N);
+  const gp = m.map(c => Math.round(c / g) * g);
+  const dg = Math.hypot(gp[0] - m[0], gp[1] - m[1]) * u;
+  let best = null, bd = Infinity;
+  if (dg <= Math.min(14, 0.38 * g * u)) { best = gp; bd = dg; }
+  for (const l of state.showEig ? state.eig.lines : []) {
+    const t = m[0] * l.d[0] + m[1] * l.d[1], q = [l.d[0] * t, l.d[1] * t];
+    const de = Math.hypot(q[0] - m[0], q[1] - m[1]) * u;
+    if (de > 10) continue;
+    if (best && Math.abs(best[0] * l.d[1] - best[1] * l.d[0]) < 1e-9) continue;
+    if (de < bd) { best = q; bd = de; }
+  }
+  return best || round;
+}
+let drag = null, press = null;
+L.addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  if (t && tipAt(viewPoint(t))) e.preventDefault();
+}, { passive: false });
+L.addEventListener('pointerdown', e => {
+  if (e.button) return;
+  const p = viewPoint(e), o = tipAt(p);
+  if (o) { drag = { o, x: e.clientX, y: e.clientY, moved: false }; L.setPointerCapture(e.pointerId); L.style.cursor = 'grabbing'; state.hover = null; drawTop(); }
+  else press = { x: e.clientX, y: e.clientY };
+});
+L.addEventListener('pointermove', e => {
+  const p = viewPoint(e), inside = p.x >= 0 && p.x <= S && p.y >= 0 && p.y <= S;
+  if (drag) {
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 4) return;
+    drag.moved = true;
+    if (!inside) return;
+    const v = snapped(toMath(p));
+    if (Math.hypot(...v) > 1e-9) { drag.o.v = v; refreshVectors(); }
+    return;
+  }
+  if (e.pointerType === 'touch') return;
+  const onTip = tipAt(p);
+  L.style.cursor = onTip ? 'grab' : 'crosshair';
+  const v = onTip ? null : snapped(toMath(p));
+  state.hover = v && Math.hypot(...v) > 1e-9 ? v : null;
+  drawTop();
+});
+L.addEventListener('pointerleave', () => { if (!drag && state.hover) { state.hover = null; drawTop(); } });
+L.addEventListener('pointerup', e => {
+  if (drag) {
+    if (drag.moved) say(`Moved v${drag.o.id} to ${pair(drag.o.v)}. A v${drag.o.id} = ${pair(mul(state.A, drag.o.v))}.`);
+    else removeVector(drag.o.id);
+    drag = null; L.style.cursor = 'crosshair';
+    return;
+  }
+  if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) {
+    const v = snapped(toMath(viewPoint(e)));
+    state.hover = null;
+    addVector(v);
+  }
+  press = null;
+});
+L.addEventListener('pointercancel', () => { drag = null; press = null; });
+
+$('eigToggle').addEventListener('click', e => {
+  state.showEig = !state.showEig;
+  e.currentTarget.setAttribute('aria-pressed', String(state.showEig));
+  drawBase();
+  renderEigInfo();
+  say(state.showEig ? describe() : 'Eigenvectors hidden.');
+  describe();
+});
+$('clear').addEventListener('click', () => {
+  state.vecs = []; state.hover = null;
+  refreshVectors();
+  say('All placed vectors removed.');
+});
+
+/* ---------- start ---------- */
+function start(saved) {
+  if (saved && saved.layout === 3) Object.assign(state, { raw: saved.raw, vecs: saved.vecs });
+  syncCells();
+  const vals = state.raw.map(parseExpr);
+  if (vals.every(v => v !== null)) state.A = vals;
+  refreshAll();
+}
+window.claude?.hot?.snapshot?.(() => ({ layout: 3, raw: state.raw, vecs: state.vecs }));
+if (window.claude?.hot?.ready) window.claude.hot.ready(start);
+else start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
