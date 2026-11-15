@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Applying a Linear Map Step by Step</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one plane with a fixed square grid; on every step each point visibly travels
+   from x_k to x_{k+1} = A x_k, optionally with its position arrow. Controls beside it. */
+:root {
+  --bg: #e9edec;
+  --panel: #fbfcfc;
+  --ink: #17212b;
+  --muted: #4f5b67;
+  --rule: #c3ccd0;
+  --ref: #8795a1;
+  --gv: #0a62a0;
+  --gh: #b4400a;
+  --eig: #c8a000;
+  --err: #a8201a;
+  --o0: #17212b; --o1: #6b3fa8; --o2: #0f7a55; --o3: #b02a68; --o4: #2a6b78;
+  --math: "STIX Two Text", "STIX Two Math", "Times New Roman", serif;
+  --ui: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151b; --panel: #171e26; --ink: #e8edf1; --muted: #a9b5c0; --rule: #36434f; --ref: #7d8b97;
+    --gv: #6cbcf5; --gh: #ff9a5c; --eig: #ffd54a; --err: #ff8d85;
+    --o0: #e8edf1; --o1: #c3a2ff; --o2: #5fd6a4; --o3: #ff8fc0; --o4: #7fd3e0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151b; --panel: #171e26; --ink: #e8edf1; --muted: #a9b5c0; --rule: #36434f; --ref: #7d8b97;
+  --gv: #6cbcf5; --gh: #ff9a5c; --eig: #ffd54a; --err: #ff8d85;
+  --o0: #e8edf1; --o1: #c3a2ff; --o2: #5fd6a4; --o3: #ff8fc0; --o4: #7fd3e0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--ui); }
+.page { max-width: 1240px; margin: 0 auto; padding: 18px 20px 32px; display: grid; gap: 16px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--gv); outline-offset: 2px; }
+
+header { display: grid; gap: 8px; }
+.eyebrow { margin: 0; color: var(--muted); font-size: 13px; }
+h1 { margin: 0; font: 600 30px/1.15 var(--math); text-wrap: balance; }
+.how { margin: 0; color: var(--muted); }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.presets > span { color: var(--muted); font-size: 13px; margin-right: 2px; }
+.btn {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 4px;
+  padding: 5px 10px; cursor: pointer; font-size: 13.5px; font-weight: 500;
+}
+.btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.btn.primary { background: var(--ink); color: var(--panel); border-color: var(--ink); padding: 7px 16px; font-size: 15px; }
+.btn.primary:hover:not(:disabled) { opacity: .88; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+.planewrap { display: grid; gap: 8px; }
+.plane {
+  display: block; width: 100%; max-width: max(420px, 78vh); aspect-ratio: 1;
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
+  user-select: none; -webkit-user-select: none; cursor: crosshair; touch-action: manipulation;
+}
+.status { margin: 0; min-height: 1.5em; font: italic 18px/1.4 var(--math); color: var(--muted); }
+.status b { font-style: normal; font-weight: 600; color: var(--ink); }
+
+/* plane marks */
+.ref { stroke: var(--ref); stroke-opacity: .16; stroke-width: 1; }
+.tick { font: 12px var(--ui); fill: var(--muted); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--panel); stroke-width: 3; }
+.gv { stroke: var(--gv); stroke-opacity: .42; stroke-width: 1.1; }
+.gh { stroke: var(--gh); stroke-opacity: .42; stroke-width: 1.1; }
+.eig { stroke: var(--eig); stroke-width: 2; stroke-dasharray: 0.1 6; stroke-linecap: round; }
+.trail { fill: none; stroke-width: 1.3; stroke-opacity: .45; stroke-linejoin: round; }
+.past { stroke: none; fill-opacity: .55; }
+.start { fill: var(--panel); stroke-width: 2.2; }
+.now { stroke: var(--panel); stroke-width: 2; }
+.o0 { --c: var(--o0); } .o1 { --c: var(--o1); } .o2 { --c: var(--o2); } .o3 { --c: var(--o3); } .o4 { --c: var(--o4); }
+.orbit .trail, .orbit .start { stroke: var(--c); }
+.orbit .past, .orbit .now { fill: var(--c); }
+.vec line { stroke: var(--c); stroke-width: 2.6; }
+.vec polygon { fill: var(--c); }
+.lbl { font: italic 500 17px var(--math); paint-order: stroke; stroke: var(--panel); stroke-width: 4; stroke-linejoin: round; fill: var(--c); }
+
+/* side column */
+.side { display: grid; gap: 18px; align-content: start; }
+.matrix { display: flex; align-items: center; gap: 8px; }
+.aeq { font: italic 30px var(--math); }
+.bracket { position: relative; padding: 6px 13px; }
+.bracket::before, .bracket::after { content: ""; position: absolute; top: 0; bottom: 0; width: 9px; border: 2px solid var(--ink); }
+.bracket::before { left: 0; border-right: 0; }
+.bracket::after { right: 0; border-left: 0; }
+.cells { display: grid; grid-template-columns: 82px 82px; gap: 5px; }
+.cells input {
+  width: 100%; height: 50px; text-align: center; font: 500 24px var(--math);
+  border: 1px solid transparent; border-bottom-color: currentColor; border-radius: 3px 3px 0 0;
+}
+.cells input.c1 { color: var(--gh); background: color-mix(in srgb, var(--gh) 9%, var(--panel)); }
+.cells input.c2 { color: var(--gv); background: color-mix(in srgb, var(--gv) 9%, var(--panel)); }
+.cells input.long { font-size: 13px; font-family: var(--ui); }
+.cells input[aria-invalid="true"] { border: 2px solid var(--err); }
+.error { margin: 0; color: var(--err); font-size: 13.5px; font-weight: 500; }
+.error:empty { display: none; }
+
+.steps { display: grid; gap: 10px; }
+.count { margin: 0; font: italic 22px var(--math); }
+.count b { font-style: normal; font-weight: 600; font-variant-numeric: tabular-nums; }
+.row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.speed { display: flex; gap: 0; }
+.speed .btn { border-radius: 0; margin-left: -1px; }
+.speed .btn:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.speed .btn:last-child { border-radius: 0 4px 4px 0; }
+.speedrow { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.tools { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--rule); padding-top: 14px; }
+
+.eiginfo { display: grid; gap: 6px; border-top: 2px solid var(--eig); padding-top: 10px; }
+.eiginfo[hidden] { display: none; }
+.eiginfo h2 { margin: 0; font: 600 17px/1.3 var(--math); }
+.eiginfo p { margin: 0; font: 16.5px/1.4 var(--math); }
+.eiginfo p small { display: block; font: 13px/1.4 var(--ui); color: var(--muted); }
+
+@media (max-width: 860px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .side { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px 28px; }
+}
+@media (max-width: 480px) { h1 { font-size: 25px; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <p class="eyebrow">Math 214 · Linear Algebra</p>
+    <h1>Applying a Linear Map Step by Step</h1>
+    <p class="how">Click the plane to place a starting point x₀. Each time A is applied, every point moves to its image, x<sub>k+1</sub> = Ax<sub>k</sub>, and the next step starts from there.</p>
+    <div class="presets" id="presets" role="group" aria-label="Example matrices"><span>Examples</span></div>
+  </header>
+
+  <div class="stage">
+    <div class="planewrap">
+      <svg class="plane" id="plane" viewBox="0 0 480 480" role="img"><g id="base"></g><g id="grid"></g><g id="eigL"></g><g id="top"></g></svg>
+      <p class="status" id="status" aria-live="polite"></p>
+    </div>
+
+    <div class="side">
+      <section aria-label="Matrix A">
+        <div class="matrix">
+          <span class="aeq">A =</span>
+          <div class="bracket">
+            <div class="cells" role="group" aria-label="Entries of matrix A">
+              <input id="a11" class="c1" aria-label="Row 1, column 1" autocomplete="off" spellcheck="false">
+              <input id="a12" class="c2" aria-label="Row 1, column 2" autocomplete="off" spellcheck="false">
+              <input id="a21" class="c1" aria-label="Row 2, column 1" autocomplete="off" spellcheck="false">
+              <input id="a22" class="c2" aria-label="Row 2, column 2" autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+        </div>
+        <p class="error" id="matErr" role="alert"></p>
+      </section>
+
+      <section class="steps" aria-label="Iterations">
+        <p class="count">t = <b id="nOut">0</b></p>
+        <div class="row">
+          <button class="btn primary" id="apply" type="button">Apply A</button>
+          <button class="btn" id="play" type="button" aria-pressed="false">Play</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="back" type="button">Back</button>
+          <button class="btn" id="reset" type="button">Reset to x₀</button>
+        </div>
+        <div class="speedrow"><span id="speedLbl">Speed</span>
+          <div class="speed" role="group" aria-labelledby="speedLbl">
+            <button class="btn" type="button" data-speed="0" aria-pressed="false">Slow</button>
+            <button class="btn" type="button" data-speed="1" aria-pressed="false">Normal</button>
+            <button class="btn" type="button" data-speed="2" aria-pressed="true">Fast</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="tools">
+        <button class="btn" id="arrowToggle" type="button" aria-pressed="true">Show arrows</button>
+        <button class="btn" id="eigToggle" type="button" aria-pressed="false">Show eigenvectors</button>
+        <button class="btn" id="ring" type="button">Ring of starting points</button>
+        <button class="btn" id="clear" type="button" aria-label="Clear all starting points">Clear all</button>
+      </div>
+
+      <section class="eiginfo" id="eigInfo" aria-label="Eigenvalues and long-run behavior" hidden></section>
+    </div>
+  </div>
+  <div class="sr" id="live" aria-live="polite"></div>
+</main>
+
+<script>
+'use strict';
+const S = 480, N = 5, MAX_N = 40, ESCAPE = 1e6, COLORS = 5;
+const SPEEDS = [
+  { apply: 1700, gap: 900 },
+  { apply: 950, gap: 500 },
+  { apply: 480, gap: 200 },
+];
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PRESETS = [
+  ['Attracting', ['0.8', '0.1', '0.1', '0.8']],
+  ['Repelling', ['1.15', '0.05', '0.05', '1.15']],
+  ['Saddle', ['1.2', '0', '0.3', '0.6']],
+  ['Spiral in', ['0.9cos(pi/6)', '-0.9sin(pi/6)', '0.9sin(pi/6)', '0.9cos(pi/6)']],
+  ['Spiral out', ['1.1cos(pi/6)', '-1.1sin(pi/6)', '1.1sin(pi/6)', '1.1cos(pi/6)']],
+  ['Rotation 30°', ['cos(pi/6)', '-sin(pi/6)', 'sin(pi/6)', 'cos(pi/6)']],
+  ['Shear', ['1', '0.25', '0', '1']],
+  ['Fibonacci', ['1', '1', '1', '0']],
+];
+const state = {
+  raw: ['0.86', '0.08', '-0.12', '1.14'], A: [0.86, 0.08, -0.12, 1.14], eig: null,
+  seeds: [],
+  n: 0, showEig: false, showArrows: true, speed: 2,
+};
+const $ = id => document.getElementById(id);
+
+/* ---------- arithmetic ---------- */
+function parseExpr(src) {
+  const t = String(src).replace(/\s+/g, '').replace(/−/g, '-').replace(/π/g, 'pi').replace(/√/g, 'sqrt').toLowerCase();
+  if (!t) return null;
+  let i = 0;
+  const FN = { sqrt: Math.sqrt, sin: Math.sin, cos: Math.cos, tan: Math.tan };
+  const fail = () => { throw new Error('parse'); };
+  function expr() {
+    let v = term();
+    while (t[i] === '+' || t[i] === '-') { const o = t[i++], r = term(); v = o === '+' ? v + r : v - r; }
+    return v;
+  }
+  function term() {
+    let v = unary();
+    for (;;) {
+      if (t[i] === '*' || t[i] === '/') { const o = t[i++], r = unary(); v = o === '*' ? v * r : v / r; }
+      else if (i < t.length && /[a-z(]/.test(t[i])) v *= power();
+      else return v;
+    }
+  }
+  function unary() {
+    if (t[i] === '-') { i++; return -unary(); }
+    if (t[i] === '+') { i++; return unary(); }
+    return power();
+  }
+  function power() {
+    const b = atom();
+    if (t[i] === '^') { i++; return Math.pow(b, unary()); }
+    return b;
+  }
+  function atom() {
+    if (t[i] === '(') { i++; const v = expr(); if (t[i++] !== ')') fail(); return v; }
+    const num = /\d+(\.\d*)?|\.\d+/y; num.lastIndex = i;
+    let m = num.exec(t);
+    if (m) { i += m[0].length; return parseFloat(m[0]); }
+    const word = /[a-z]+/y; word.lastIndex = i;
+    m = word.exec(t);
+    if (!m) fail();
+    i += m[0].length;
+    if (m[0] === 'pi') return Math.PI;
+    if (FN[m[0]]) return FN[m[0]](atom());
+    return fail();
+  }
+  try {
+    const v = expr();
+    if (i !== t.length || !Number.isFinite(v)) return null;
+    return Math.abs(v) < 1e-12 ? 0 : v;
+  } catch (e) { return null; }
+}
+function fmt(x) {
+  const r = Math.round(x * 1000) / 1000;
+  return r === 0 ? '0' : String(r).replace('-', '−');
+}
+const pair = v => `(${fmt(v[0])}, ${fmt(v[1])})`;
+const sub = n => String(n).replace(/\d/g, d => '₀₁₂₃₄₅₆₇₈₉'[d]);
+const mul = (A, v) => [A[0] * v[0] + A[1] * v[1], A[2] * v[0] + A[3] * v[1]];
+const matScale = A => Math.max(...A.map(Math.abs));
+const det = A => A[0] * A[3] - A[1] * A[2];
+
+function eigenline(A, lam) {
+  const r1 = [A[0] - lam, A[1]], r2 = [A[2], A[3] - lam];
+  const r = Math.hypot(...r1) >= Math.hypot(...r2) ? r1 : r2;
+  const v = [-r[1], r[0]], n = Math.hypot(...v);
+  const d = [v[0] / n, v[1] / n];
+  const m = Math.max(Math.abs(d[0]), Math.abs(d[1]));
+  let u = [d[0] / m, d[1] / m];
+  if (u[0] < -1e-9 || (Math.abs(u[0]) <= 1e-9 && u[1] < 0)) u = [-u[0], -u[1]];
+  return { lam, d, u };
+}
+function eigen(A) {
+  const [a, b, c, d] = A, s = matScale(A);
+  if (s < 1e-12) return { kind: 'scalar', lam: 0, lines: [] };
+  if (Math.abs(b) <= 1e-9 * s && Math.abs(c) <= 1e-9 * s && Math.abs(a - d) <= 1e-9 * s) {
+    return { kind: 'scalar', lam: (a + d) / 2, lines: [] };
+  }
+  const tr = a + d, disc = (a - d) * (a - d) + 4 * b * c;
+  if (disc < -1e-10 * s * s) return { kind: 'complex', re: tr / 2, im: Math.sqrt(-disc) / 2, lines: [] };
+  if (Math.abs(disc) <= 1e-10 * s * s) return { kind: 'defective', lam: tr / 2, lines: [eigenline(A, tr / 2)] };
+  const root = Math.sqrt(disc), D = det(A);
+  let l1, l2;
+  if (tr >= 0) { l1 = (tr + root) / 2; l2 = D / l1; } else { l2 = (tr - root) / 2; l1 = D / l2; }
+  if (Math.abs(l1) < Math.abs(l2)) [l1, l2] = [l2, l1];
+  return { kind: 'two', lines: [eigenline(A, l1), eigenline(A, l2)] };
+}
+
+/* orbit of a seed, as far as step `upto`, stopping if it escapes */
+function orbit(v, upto) {
+  const pts = [v];
+  for (let k = 0; k < upto; k++) {
+    const w = mul(state.A, pts[pts.length - 1]);
+    if (!w.every(Number.isFinite) || Math.hypot(...w) > ESCAPE) break;
+    pts.push(w);
+  }
+  return pts;
+}
+const localK = s => Math.max(0, state.n - s.b);
+
+/* ---------- drawing ---------- */
+const unit = S / (2 * N);
+const X = x => (x + N) * unit;
+const Y = y => (N - y) * unit;
+const n2 = v => v.toFixed(2);
+function seg(p, q, cls, extra) {
+  return `<line class="${cls}" x1="${n2(X(p[0]))}" y1="${n2(Y(p[1]))}" x2="${n2(X(q[0]))}" y2="${n2(Y(q[1]))}"${extra || ''}/>`;
+}
+function drawBase() {
+  let out = '';
+  for (let k = -N; k <= N; k++) out += seg([k, -N], [k, N], 'ref') + seg([-N, k], [N, k], 'ref');
+  for (let k = -N + 1; k < N; k++) {
+    if (k === 0) continue;
+    out += `<text class="tick" x="${n2(X(k))}" y="${n2(Y(0) + 16)}" text-anchor="middle">${fmt(k)}</text>`;
+    out += `<text class="tick" x="${n2(X(0) - 7)}" y="${n2(Y(k) + 4)}" text-anchor="end">${fmt(k)}</text>`;
+  }
+  $('base').innerHTML = out;
+  $('grid').innerHTML = gridUnder([1, 0, 0, 1], 1);
+  let e = '';
+  if (state.showEig) {
+    const ei = state.eig;
+    const dirs = ei.kind === 'scalar'
+      ? Array.from({ length: 12 }, (_, i) => [Math.cos(i * Math.PI / 12), Math.sin(i * Math.PI / 12)])
+      : ei.lines.map(l => l.d);
+    e = dirs.map(d => {
+      const t = N / Math.max(Math.abs(d[0]), Math.abs(d[1]));
+      return seg([-d[0] * t, -d[1] * t], [d[0] * t, d[1] * t], 'eig');
+    }).join('');
+  }
+  $('eigL').innerHTML = e;
+}
+/* image of the square grid under M, drawn with the given opacity */
+function gridUnder(M, opacity) {
+  if (opacity <= 0.001) return '';
+  const s = M[0] ** 2 + M[1] ** 2 + M[2] ** 2 + M[3] ** 2, D = Math.abs(det(M));
+  const smin = Math.sqrt(Math.max(0, (s - Math.sqrt(Math.max(0, s * s - 4 * D * D))) / 2));
+  const R = Math.min(40, Math.max(N + 1, Math.ceil(7.3 / Math.max(smin, 1e-9)) + 1));
+  const op = opacity < 1 ? ` opacity="${opacity.toFixed(3)}"` : '';
+  /* when M nearly collapses the plane, neighbouring grid lines crowd together: thin them out */
+  const c1 = Math.hypot(M[0], M[2]), c2 = Math.hypot(M[1], M[3]);
+  const gapV = D / Math.max(c2, 1e-12) * unit, gapH = D / Math.max(c1, 1e-12) * unit;
+  const strideV = Math.min(2 * R, Math.max(1, Math.ceil(6 / Math.max(gapV, 1e-9))));
+  const strideH = Math.min(2 * R, Math.max(1, Math.ceil(6 / Math.max(gapH, 1e-9))));
+  let out = '';
+  for (let k = -R; k <= R; k++) {
+    if (k % strideV === 0) out += seg(mul(M, [k, -R]), mul(M, [k, R]), 'gv', op);
+    if (k % strideH === 0) out += seg(mul(M, [-R, k]), mul(M, [R, k]), 'gh', op);
+  }
+  return out;
+}
+function arrow(tip) {
+  const ox = X(0), oy = Y(0), sx = X(tip[0]), sy = Y(tip[1]);
+  const dx = sx - ox, dy = sy - oy, len = Math.hypot(dx, dy);
+  if (len < 4) return '';
+  const ux = dx / len, uy = dy / len, h = Math.min(13, len * 0.6), w = h * 0.48;
+  const bx = sx - ux * (h + 6), by = sy - uy * (h + 6), tx = sx - ux * 6, ty = sy - uy * 6;
+  return `<g class="vec"><line x1="${n2(ox)}" y1="${n2(oy)}" x2="${n2(bx + ux)}" y2="${n2(by + uy)}"/>` +
+    `<polygon points="${n2(tx)},${n2(ty)} ${n2(bx - uy * w)},${n2(by + ux * w)} ${n2(bx + uy * w)},${n2(by - ux * w)}"/></g>`;
+}
+/* frame: t = progress of applying A (0..1) for the step from n to n+1, or null when idle */
+function drawFrame(phase) {
+  const moving = phase && phase.kind === 'apply';
+  const few = state.seeds.length <= 3;
+  let out = '';
+  for (const sd of state.seeds) {
+    const k = localK(sd), pts = orbit(sd.v, k + (moving ? 1 : 0));
+    const atK = Math.min(k, pts.length - 1);
+    const trailPts = pts.slice(0, atK + 1);
+    let cur = pts[atK], label = 'x' + sub(atK);
+    if (moving && pts.length > atK + 1) {
+      const a = pts[atK], b = pts[atK + 1], t = phase.t;
+      cur = [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])];
+      label = 'Ax' + sub(atK);
+    }
+    const cls = 'orbit o' + ((sd.id - 1) % COLORS);
+    out += `<g class="${cls}">`;
+    const line = [...trailPts, cur].map(p => n2(X(p[0])) + ',' + n2(Y(p[1]))).join(' ');
+    out += `<polyline class="trail" points="${line}"/>`;
+    if (state.showArrows) out += arrow(cur);
+    trailPts.forEach((p, i) => {
+      if (i === 0) return;
+      if (!moving && i === atK) return;
+      out += `<circle class="past" cx="${n2(X(p[0]))}" cy="${n2(Y(p[1]))}" r="3"><title>Orbit ${sd.id}: x${sub(i)} = ${pair(p)}</title></circle>`;
+    });
+    out += `<circle class="start" cx="${n2(X(sd.v[0]))}" cy="${n2(Y(sd.v[1]))}" r="5.5"><title>Orbit ${sd.id}: x₀ = ${pair(sd.v)}</title></circle>`;
+    if (atK > 0 || moving) out += `<circle class="now" cx="${n2(X(cur[0]))}" cy="${n2(Y(cur[1]))}" r="6"/>`;
+    if (few && Math.abs(cur[0]) < N && Math.abs(cur[1]) < N) {
+      const lx = Math.min(Math.max(X(cur[0]) + 14, 18), S - 30), ly = Math.min(Math.max(Y(cur[1]) - 12, 16), S - 8);
+      out += `<text class="lbl" x="${n2(lx)}" y="${n2(ly)}">${label}</text>`;
+    }
+    out += '</g>';
+  }
+  $('top').innerHTML = out;
+}
+
+/* ---------- status, readout ---------- */
+function setStatus(phase) {
+  const n = state.n;
+  let html;
+  if (phase && phase.kind === 'apply') html = `Applying A: each point x<sub>${n}</sub> moves to <b>x<sub>${n + 1}</sub> = Ax<sub>${n}</sub></b>`;
+  else if (!state.seeds.length) html = 'Click the plane to place a starting point x₀.';
+  else if (n === 0) html = 'Press Apply A to move every point to its image.';
+  else html = n === 1 ? 'After 1 step, each point is x<sub>1</sub> = Ax₀.' : `After ${n} steps, each point is x<sub>${n}</sub> = A<sup>${n}</sup>x₀.`;
+  $('status').innerHTML = html;
+}
+const TOL = 1e-9;
+function cplx(re, im) {
+  const r = fmt(re), m = fmt(Math.abs(im)), imag = (m === '1' ? '' : m) + 'i';
+  if (r === '0') return (im < 0 ? '−' : '') + imag;
+  return r + (im < 0 ? ' − ' : ' + ') + imag;
+}
+function realLine(lam, vec, extra) {
+  const m = Math.abs(lam);
+  let how;
+  if (m <= TOL) how = 'is sent to 0 in one step';
+  else if (Math.abs(lam - 1) <= TOL) how = 'stays fixed';
+  else if (Math.abs(lam + 1) <= TOL) how = 'flips direction each step but keeps its length';
+  else how = (lam < 0 ? 'flips direction each step and ' : '') + (m > 1 ? 'grows' : 'shrinks') + ` by a factor of ${fmt(m)}`;
+  return `<p>λ = ${fmt(lam)}${extra || ''}, eigenvector ${pair(vec)}<small>Along this line, x ${how}.</small></p>`;
+}
+function classify(e) {
+  if (e.kind === 'complex') {
+    const r = Math.hypot(e.re, e.im);
+    return r < 1 - TOL ? 'Spiral in: every orbit circles toward 0'
+      : r > 1 + TOL ? 'Spiral out: every orbit circles away from 0'
+      : 'Center: orbits circle 0 forever on ellipses';
+  }
+  const ms = e.kind === 'two' ? e.lines.map(l => Math.abs(l.lam)) : [Math.abs(e.lam)];
+  const lo = Math.min(...ms), hi = Math.max(...ms), one = m => Math.abs(m - 1) <= TOL;
+  if (hi < 1 - TOL) return 'Attracting: every orbit goes to 0';
+  if (lo > 1 + TOL) return 'Repelling: every orbit except 0 grows without bound';
+  if (lo < 1 - TOL && hi > 1 + TOL) return 'Saddle: orbits approach 0 along one line and escape along the other';
+  if (e.kind === 'defective') return 'Shear-like: orbits drift at a steady rate, parallel to the eigenline';
+  if (one(lo) && one(hi)) return 'Neutral: no orbit grows or shrinks';
+  if (one(hi)) return 'Orbits settle onto the |λ| = 1 eigenline';
+  return 'Orbits escape along one line; along the |λ| = 1 line they keep their length';
+}
+function renderEigInfo() {
+  const box = $('eigInfo'), e = state.eig, A = state.A;
+  box.hidden = !state.showEig;
+  if (!state.showEig) return;
+  let body = '';
+  if (e.kind === 'two') {
+    body = e.lines.map(l => realLine(l.lam, l.u)).join('');
+    const [a, b] = e.lines.map(l => Math.abs(l.lam));
+    if (a > b + TOL && a > TOL) body += `<p><small>Since |λ| = ${fmt(a)} is the larger, most orbits line up with ${pair(e.lines[0].u)} as t grows.</small></p>`;
+  } else if (e.kind === 'defective') {
+    body = realLine(e.lam, e.lines[0].u, ' (repeated)');
+  } else if (e.kind === 'scalar') {
+    body = `<p>λ = ${fmt(e.lam)} (repeated)<small>Every nonzero vector is an eigenvector, so each orbit stays on its own line through 0.</small></p>`;
+  } else {
+    const x = (e.re - A[0]) / A[1], y = e.im / A[1];
+    const r = Math.hypot(e.re, e.im), ang = Math.abs(Math.atan2(e.im, e.re)) * 180 / Math.PI;
+    body = `<p>λ = ${cplx(e.re, e.im)}, eigenvector (1, ${cplx(x, y)})</p>` +
+      `<p>λ = ${cplx(e.re, -e.im)}, eigenvector (1, ${cplx(x, -y)})</p>` +
+      `<p>|λ| = ${fmt(r)}, angle ${fmt(ang)}°<small>No real eigenlines. Each step turns about ${fmt(ang)}° and the size ${r > 1 + TOL ? `grows by a factor of ${fmt(r)}` : r < 1 - TOL ? `shrinks by a factor of ${fmt(r)}` : 'stays the same on average'}.</small></p>`;
+  }
+  box.innerHTML = `<h2>${classify(e)}</h2>` + body;
+}
+function describe() {
+  const seeds = state.seeds.map(s => {
+    const k = localK(s), pts = orbit(s.v, k);
+    return `orbit ${s.id} starts at ${pair(s.v)} and is now at ${pair(pts[pts.length - 1])}`;
+  }).join('; ');
+  $('plane').setAttribute('aria-label', `Plane from minus 5 to 5 after ${state.n} applications of A. ` +
+    (state.showEig ? classify(state.eig) + '. ' : '') + (seeds ? seeds[0].toUpperCase() + seeds.slice(1) + '.' : 'No starting points placed.'));
+}
+function syncControls() {
+  $('nOut').textContent = state.n;
+  $('back').disabled = state.n === 0 || !!anim;
+  $('reset').disabled = state.n === 0 || !!anim;
+  $('apply').disabled = state.n >= MAX_N || !!anim;
+  document.querySelectorAll('#presets .btn').forEach(b => {
+    b.setAttribute('aria-pressed', String(PRESETS[+b.dataset.i][1].join() === state.raw.join()));
+  });
+}
+function idle() { drawFrame(null); setStatus(null); syncControls(); describe(); }
+function refreshAll() { state.eig = eigen(state.A); drawBase(); renderEigInfo(); if (!anim) idle(); else syncControls(); }
+function say(msg) { $('live').textContent = msg; }
+
+/* ---------- animation ---------- */
+let anim = null, playing = false, nextTimer = null;
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function runPhase(kind, dur, done) {
+  if (REDUCED || dur <= 0) { drawFrame({ kind, t: 1 }); done(); return; }
+  const t0 = performance.now();
+  const tick = now => {
+    if (!anim) return;
+    const raw = Math.min(1, (now - t0) / dur);
+    drawFrame({ kind, t: ease(raw) });
+    if (raw < 1) anim.raf = requestAnimationFrame(tick);
+    else done();
+  };
+  anim.raf = requestAnimationFrame(tick);
+}
+function applyOnce() {
+  if (anim || state.n >= MAX_N) return;
+  const sp = SPEEDS[state.speed];
+  anim = { raf: 0 };
+  syncControls();
+  setStatus({ kind: 'apply' });
+  runPhase('apply', sp.apply, () => {
+    state.n++;
+    anim = null;
+    idle();
+    if (playing) {
+      if (state.n >= MAX_N) stopPlay();
+      else nextTimer = setTimeout(applyOnce, REDUCED ? 600 : sp.gap);
+    }
+  });
+}
+function cancelAnim() {
+  if (anim) { cancelAnimationFrame(anim.raf); anim = null; }
+  clearTimeout(nextTimer);
+}
+function stopPlay() {
+  playing = false; clearTimeout(nextTimer);
+  $('play').textContent = 'Play'; $('play').setAttribute('aria-pressed', 'false');
+}
+$('apply').addEventListener('click', () => { stopPlay(); applyOnce(); });
+$('play').addEventListener('click', () => {
+  if (playing) { stopPlay(); return; }
+  if (state.n >= MAX_N) { state.n = 0; state.seeds.forEach(s => { s.b = 0; }); idle(); }
+  playing = true;
+  $('play').textContent = 'Pause'; $('play').setAttribute('aria-pressed', 'true');
+  applyOnce();
+});
+$('back').addEventListener('click', () => { stopPlay(); cancelAnim(); state.n = Math.max(0, state.n - 1); idle(); });
+$('reset').addEventListener('click', () => {
+  stopPlay(); cancelAnim(); state.n = 0; state.seeds.forEach(s => { s.b = 0; }); idle();
+  say('Every point is back at its starting point x₀.');
+});
+document.querySelectorAll('[data-speed]').forEach(b => b.addEventListener('click', () => {
+  state.speed = +b.dataset.speed;
+  document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+}));
+
+/* ---------- matrix input ---------- */
+const cells = ['a11', 'a12', 'a21', 'a22'].map($);
+function fitCellText() { cells.forEach(el => el.classList.toggle('long', el.value.length > 5)); }
+function applyMatrix(showErrors) {
+  const vals = state.raw.map(parseExpr), bad = vals.some(v => v === null);
+  cells.forEach((el, i) => el.setAttribute('aria-invalid', String(showErrors && vals[i] === null)));
+  fitCellText();
+  if (bad) {
+    if (showErrors) $('matErr').textContent = 'Each entry needs a number, such as 0.8, 3/4 or 0.9cos(pi/6). The plane still uses the last valid matrix.';
+    return;
+  }
+  $('matErr').textContent = '';
+  state.A = vals;
+  refreshAll();
+}
+cells.forEach((el, i) => {
+  el.addEventListener('input', () => { state.raw[i] = el.value; applyMatrix(false); });
+  el.addEventListener('change', () => applyMatrix(true));
+  el.addEventListener('focus', () => el.select());
+});
+function syncCells() { cells.forEach((el, i) => { el.value = state.raw[i]; }); fitCellText(); }
+PRESETS.forEach((p, i) => {
+  const b = document.createElement('button');
+  b.className = 'btn'; b.type = 'button'; b.dataset.i = i; b.textContent = p[0];
+  b.addEventListener('click', () => {
+    stopPlay(); cancelAnim();
+    state.n = 0; state.seeds.forEach(s => { s.b = 0; });
+    state.raw = p[1].slice(); syncCells(); applyMatrix(true);
+  });
+  $('presets').appendChild(b);
+});
+
+/* ---------- tools ---------- */
+$('eigToggle').addEventListener('click', e => {
+  state.showEig = !state.showEig;
+  e.currentTarget.setAttribute('aria-pressed', String(state.showEig));
+  drawBase(); renderEigInfo(); describe();
+  say(state.showEig ? classify(state.eig) + '.' : 'Eigenvectors hidden.');
+});
+$('arrowToggle').addEventListener('click', e => {
+  state.showArrows = !state.showArrows;
+  e.currentTarget.setAttribute('aria-pressed', String(state.showArrows));
+  if (!anim) drawFrame(null);
+  say(state.showArrows ? 'Arrows from the origin to each current point shown.' : 'Arrows hidden.');
+});
+function nextId() { let id = 1; while (state.seeds.some(s => s.id === id)) id++; return id; }
+$('ring').addEventListener('click', () => {
+  stopPlay(); cancelAnim();
+  state.n = 0;
+  state.seeds = Array.from({ length: 12 }, (_, k) => {
+    const a = k * Math.PI / 6;
+    return { id: k + 1, v: [Math.round(4 * Math.cos(a) * 100) / 100, Math.round(4 * Math.sin(a) * 100) / 100], b: 0 };
+  });
+  idle();
+  say('Placed 12 starting points on the circle of radius 4.');
+});
+$('clear').addEventListener('click', () => {
+  stopPlay(); cancelAnim(); state.seeds = []; state.n = 0; idle(); say('All starting points removed.');
+});
+
+/* ---------- placing starting points ---------- */
+const P = $('plane');
+function viewPoint(ev) {
+  const p = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(P.getScreenCTM().inverse());
+  return { x: p.x, y: p.y };
+}
+const toMath = p => [p.x / unit - N, N - p.y / unit];
+function seedAt(p) {
+  for (let i = state.seeds.length - 1; i >= 0; i--) {
+    const v = state.seeds[i].v;
+    if (Math.hypot(X(v[0]) - p.x, Y(v[1]) - p.y) <= 12) return state.seeds[i];
+  }
+  return null;
+}
+function snapped(m) {
+  const round = m.map(c => Math.round(c * 100) / 100);
+  const gp = m.map(Math.round);
+  const dg = Math.hypot(gp[0] - m[0], gp[1] - m[1]) * unit;
+  let best = dg <= 12 ? gp : null, bd = best ? dg : Infinity;
+  for (const l of state.showEig ? state.eig.lines : []) {
+    const t = m[0] * l.d[0] + m[1] * l.d[1], q = [l.d[0] * t, l.d[1] * t];
+    const de = Math.hypot(q[0] - m[0], q[1] - m[1]) * unit;
+    if (de > 10) continue;
+    if (best && Math.abs(best[0] * l.d[1] - best[1] * l.d[0]) < 1e-9) continue;
+    if (de < bd) { best = q; bd = de; }
+  }
+  return best || round;
+}
+let drag = null, press = null;
+P.addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  if (t && !anim && seedAt(viewPoint(t))) e.preventDefault();
+}, { passive: false });
+P.addEventListener('pointerdown', e => {
+  if (e.button || anim) return;
+  const p = viewPoint(e), s = seedAt(p);
+  if (s) { drag = { s, x: e.clientX, y: e.clientY, moved: false }; P.setPointerCapture(e.pointerId); P.style.cursor = 'grabbing'; }
+  else press = { x: e.clientX, y: e.clientY };
+});
+P.addEventListener('pointermove', e => {
+  const p = viewPoint(e), inside = p.x >= 0 && p.x <= S && p.y >= 0 && p.y <= S;
+  if (drag) {
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 4) return;
+    drag.moved = true;
+    if (!inside) return;
+    const v = snapped(toMath(p));
+    if (Math.hypot(...v) > 1e-9) { drag.s.v = v; idle(); }
+    return;
+  }
+  if (e.pointerType !== 'touch') P.style.cursor = !anim && seedAt(p) ? 'grab' : 'crosshair';
+});
+P.addEventListener('pointerup', e => {
+  if (drag) {
+    if (drag.moved) say(`Moved orbit ${drag.s.id} to start at ${pair(drag.s.v)}.`);
+    else { state.seeds = state.seeds.filter(s => s !== drag.s); idle(); say(`Removed orbit ${drag.s.id}.`); }
+    drag = null; P.style.cursor = 'crosshair';
+    return;
+  }
+  if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) {
+    const v = snapped(toMath(viewPoint(e)));
+    if (Math.hypot(...v) < 1e-9) say('The origin is fixed by every linear map, so nothing was added.');
+    else if (!state.seeds.some(s => Math.hypot(s.v[0] - v[0], s.v[1] - v[1]) < 1e-9)) {
+      const id = nextId();
+      state.seeds.push({ id, v, b: state.n });
+      idle();
+      say(`Placed orbit ${id} starting at ${pair(v)}.`);
+    }
+  }
+  press = null;
+});
+P.addEventListener('pointercancel', () => { drag = null; press = null; });
+
+/* ---------- start ---------- */
+function start(saved) {
+  if (saved && saved.layout === 4) Object.assign(state, { raw: saved.raw, seeds: saved.seeds, n: saved.n, showEig: saved.showEig, showArrows: !!saved.showArrows, speed: saved.speed });
+  $('eigToggle').setAttribute('aria-pressed', String(state.showEig));
+  $('arrowToggle').setAttribute('aria-pressed', String(state.showArrows));
+  document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', String(+o.dataset.speed === state.speed)));
+  syncCells();
+  const vals = state.raw.map(parseExpr);
+  if (vals.every(v => v !== null)) state.A = vals;
+  refreshAll();
+}
+window.claude?.hot?.snapshot?.(() => ({ layout: 4, raw: state.raw, seeds: state.seeds, n: state.n, showEig: state.showEig, showArrows: state.showArrows, speed: state.speed }));
+if (window.claude?.hot?.ready) window.claude.hot.ready(start);
+else start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
