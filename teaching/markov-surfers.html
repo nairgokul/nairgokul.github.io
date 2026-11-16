@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web Surfers on a Markov Chain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: the chain drawn as a graph (nodes, weighted links, self-loops) with surfers
+   as dots clustered in each node; the transition matrix, start vector and controls beside it. */
+:root {
+  --bg: #e9edec;
+  --panel: #fbfcfc;
+  --ink: #17212b;
+  --muted: #4f5b67;
+  --rule: #c3ccd0;
+  --edge: #4f5b67;
+  --err: #a8201a;
+  --n1: #0a62a0; --n2: #b4400a; --n3: #0f7a55; --n4: #6b3fa8; --n5: #b02a68;
+  --math: "STIX Two Text", "STIX Two Math", "Times New Roman", serif;
+  --ui: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151b; --panel: #171e26; --ink: #e8edf1; --muted: #a9b5c0; --rule: #36434f; --edge: #a9b5c0; --err: #ff8d85;
+    --n1: #6cbcf5; --n2: #ff9a5c; --n3: #5fd6a4; --n4: #c3a2ff; --n5: #ff8fc0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151b; --panel: #171e26; --ink: #e8edf1; --muted: #a9b5c0; --rule: #36434f; --edge: #a9b5c0; --err: #ff8d85;
+  --n1: #6cbcf5; --n2: #ff9a5c; --n3: #5fd6a4; --n4: #c3a2ff; --n5: #ff8fc0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--ui); }
+.page { max-width: 1280px; margin: 0 auto; padding: 18px 20px 32px; display: grid; gap: 16px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--n1); outline-offset: 2px; }
+
+header { display: grid; gap: 8px; }
+.eyebrow { margin: 0; color: var(--muted); font-size: 13px; }
+h1 { margin: 0; font: 600 30px/1.15 var(--math); text-wrap: balance; }
+.how { margin: 0; color: var(--muted); max-width: 80ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bar > span { color: var(--muted); font-size: 13px; margin-right: 2px; }
+.btn {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 4px;
+  padding: 5px 10px; cursor: pointer; font-size: 13.5px; font-weight: 500;
+}
+.btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.btn.primary { background: var(--ink); color: var(--panel); border-color: var(--ink); padding: 7px 16px; font-size: 15px; }
+.btn.primary:hover:not(:disabled) { opacity: .88; }
+.seg { display: inline-flex; }
+.seg .btn { border-radius: 0; margin-left: -1px; }
+.seg .btn:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.seg .btn:last-child { border-radius: 0 4px 4px 0; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.graphwrap { display: grid; gap: 8px; }
+.graph { position: relative; width: 100%; max-width: max(420px, 80vh); aspect-ratio: 1; }
+.graph svg, .graph canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.graph svg { background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; }
+.graph canvas { pointer-events: none; }
+.status { margin: 0; min-height: 1.5em; font: italic 18px/1.4 var(--math); color: var(--muted); }
+
+/* graph marks */
+.edge { fill: none; stroke: var(--edge); stroke-opacity: .5; stroke-linecap: round; }
+.ahead { fill: var(--edge); fill-opacity: .75; }
+.wlbl { font: 600 13px var(--ui); fill: var(--muted); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--panel); stroke-width: 4; stroke-linejoin: round; }
+.disk { stroke-width: 1.6; }
+.steady { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-dasharray: 5 4; stroke-opacity: .7; }
+.nname { font: 600 17px var(--math); paint-order: stroke; stroke: var(--panel); stroke-width: 4; stroke-linejoin: round; }
+.ncount { font: 13px var(--ui); fill: var(--muted); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--panel); stroke-width: 4; stroke-linejoin: round; }
+
+/* side column */
+.side { display: grid; gap: 18px; align-content: start; }
+.block { display: grid; gap: 8px; }
+.block h2 { margin: 0; font: 600 16px/1.3 var(--math); }
+.note { margin: 0; color: var(--muted); font-size: 13px; }
+.mat { display: grid; gap: 4px; align-items: center; justify-content: start; }
+.mat .hd { font-size: 12px; color: var(--muted); text-align: center; }
+.mat .rh { font-size: 12px; color: var(--muted); text-align: right; padding-right: 4px; white-space: nowrap; }
+.mat input {
+  width: 100%; height: 38px; text-align: center; font: 500 18px var(--math);
+  background: color-mix(in srgb, var(--ink) 5%, var(--panel));
+  border: 1px solid transparent; border-bottom-color: var(--muted); border-radius: 3px 3px 0 0;
+}
+.mat input[aria-invalid="true"] { border: 2px solid var(--err); }
+.mat .sum { font-size: 12px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mat .sum.bad { color: var(--err); font-weight: 600; }
+.sw { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
+.error { margin: 0; color: var(--err); font-size: 13.5px; font-weight: 500; }
+.error:empty { display: none; }
+.count { margin: 0; font: italic 22px var(--math); }
+.count b { font-style: normal; font-weight: 600; font-variant-numeric: tabular-nums; }
+.row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.opt > span { min-width: 64px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 4px 0 4px 10px; border-top: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; padding-left: 0; }
+thead th { border-top: 0; color: var(--muted); font-size: 12px; font-weight: 500; }
+.stcol[hidden] { display: none; }
+
+@media (max-width: 920px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .side { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px 28px; }
+}
+@media (max-width: 480px) { h1 { font-size: 25px; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <p class="eyebrow">Math 214 · Linear Algebra</p>
+    <h1>Web Surfers on a Markov Chain</h1>
+    <p class="how">Each dot is a web surfer sitting on a page. At every step, the surfers at node j spread out along the links, with a fraction P<sub>ij</sub> of them going to node i. Dots keep the color of the node they started at, so you can see the surfers mix.</p>
+    <div class="bar" id="presets" role="group" aria-label="Example chains"><span>Examples</span></div>
+  </header>
+
+  <div class="stage">
+    <div class="graphwrap">
+      <div class="graph" id="graph">
+        <svg id="svg" viewBox="0 0 760 760" role="img"><g id="edges"></g><g id="nodes"></g><g id="labels"></g></svg>
+        <canvas id="cv" aria-hidden="true"></canvas>
+      </div>
+      <p class="status" id="status" aria-live="polite"></p>
+    </div>
+
+    <div class="side">
+      <section class="block" aria-labelledby="pHead">
+        <div class="row" style="justify-content: space-between">
+          <h2 id="pHead">Transition matrix P</h2>
+          <div class="seg" id="sizes" role="group" aria-label="Number of nodes"></div>
+        </div>
+        <div class="mat" id="mat"></div>
+        <p class="note">Row i, column j is the chance a surfer at node j moves to node i. Each column adds up to 1.</p>
+        <p class="error" id="matErr" role="alert"></p>
+      </section>
+
+      <section class="block" aria-labelledby="xHead">
+        <h2 id="xHead">Starting distribution x₀</h2>
+        <div class="mat" id="xBox"></div>
+        <p class="note" id="xNote"></p>
+        <p class="error" id="xErr" role="alert"></p>
+      </section>
+
+      <section class="block" aria-label="Steps">
+        <p class="count">t = <b id="tOut">0</b></p>
+        <div class="row">
+          <button class="btn primary" id="step" type="button">Step</button>
+          <button class="btn" id="play" type="button" aria-pressed="false">Play</button>
+          <button class="btn" id="back" type="button">Back</button>
+          <button class="btn" id="reset" type="button">Reset</button>
+        </div>
+        <div class="opt"><span id="lblN">Surfers</span>
+          <div class="seg" role="group" aria-labelledby="lblN">
+            <button class="btn" type="button" data-n="100">100</button>
+            <button class="btn" type="button" data-n="500">500</button>
+          </div>
+        </div>
+        <div class="opt"><span id="lblMode">Moves</span>
+          <div class="seg" role="group" aria-labelledby="lblMode">
+            <button class="btn" type="button" data-mode="exact">Exact fractions</button>
+            <button class="btn" type="button" data-mode="random">Random choices</button>
+          </div>
+        </div>
+        <div class="opt"><span id="lblSpeed">Speed</span>
+          <div class="seg" role="group" aria-labelledby="lblSpeed">
+            <button class="btn" type="button" data-speed="0">Slow</button>
+            <button class="btn" type="button" data-speed="1">Normal</button>
+            <button class="btn" type="button" data-speed="2">Fast</button>
+          </div>
+        </div>
+        <div class="row"><button class="btn" id="steadyToggle" type="button" aria-pressed="false">Show steady state</button></div>
+      </section>
+
+      <section class="block" aria-labelledby="dHead">
+        <h2 id="dHead">Where the surfers are</h2>
+        <table>
+          <caption class="sr">Surfers at each node now, their share, the exact distribution P to the t times x0, and the steady state</caption>
+          <thead><tr><th scope="col">Node</th><th scope="col">Surfers</th><th scope="col">Share</th><th scope="col">Exact Pᵗx₀</th><th scope="col" class="stcol" hidden>Steady state</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p class="note" id="stNote"></p>
+      </section>
+    </div>
+  </div>
+  <div class="sr" id="live" aria-live="polite"></div>
+</main>
+
+<script>
+'use strict';
+const VB = 760;
+const SPEEDS = [{ move: 1700, gap: 700 }, { move: 1050, gap: 380 }, { move: 560, gap: 160 }];
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const LAYOUT = { 2: { L: 200, R: 100 }, 3: { L: 205, R: 92 }, 4: { L: 225, R: 80 }, 5: { L: 245, R: 68 } };
+const PRESETS = [
+  ['Three sites', [['0.7', '0.1', '0.2'], ['0.2', '0.4', '0.2'], ['0.1', '0.5', '0.6']], ['1/3', '1/3', '1/3']],
+  ['Two sites', [['0.9', '0.5'], ['0.1', '0.5']], ['1/2', '1/2']],
+  ['Cycle', [['0', '0', '1'], ['1', '0', '0'], ['0', '1', '0']], ['1', '0', '0']],
+  ['Absorbing', [['1', '0.3', '0.1'], ['0', '0.5', '0.4'], ['0', '0.2', '0.5']], ['1/3', '1/3', '1/3']],
+  ['Four web pages', [['0', '0', '1', '1/2'], ['1/2', '0', '0', '0'], ['1/2', '1', '0', '1/2'], ['0', '0', '0', '0']], ['1/4', '1/4', '1/4', '1/4']],
+];
+const $ = id => document.getElementById(id);
+const state = {
+  n: 3,
+  raw: PRESETS[0][1].map(r => r.slice()), rawX: PRESETS[0][2].slice(),
+  P: null, x0: null, valid: false,
+  N: 100, mode: 'exact', speed: 1, showSteady: false,
+  t: 0, hist: [], groups: null, order: null, steady: null,
+};
+
+/* ---------- arithmetic ---------- */
+function parseExpr(src) {
+  const t = String(src).replace(/\s+/g, '').replace(/−/g, '-').replace(/%/g, '/100').toLowerCase();
+  if (!t) return null;
+  let i = 0;
+  const fail = () => { throw new Error('parse'); };
+  function expr() {
+    let v = term();
+    while (t[i] === '+' || t[i] === '-') { const o = t[i++], r = term(); v = o === '+' ? v + r : v - r; }
+    return v;
+  }
+  function term() {
+    let v = unary();
+    while (t[i] === '*' || t[i] === '/') { const o = t[i++], r = unary(); v = o === '*' ? v * r : v / r; }
+    return v;
+  }
+  function unary() {
+    if (t[i] === '-') { i++; return -unary(); }
+    if (t[i] === '+') { i++; return unary(); }
+    return atom();
+  }
+  function atom() {
+    if (t[i] === '(') { i++; const v = expr(); if (t[i++] !== ')') fail(); return v; }
+    const num = /\d+(\.\d*)?|\.\d+/y; num.lastIndex = i;
+    const m = num.exec(t);
+    if (!m) fail();
+    i += m[0].length;
+    return parseFloat(m[0]);
+  }
+  try {
+    const v = expr();
+    if (i !== t.length || !Number.isFinite(v)) return null;
+    return Math.abs(v) < 1e-12 ? 0 : v;
+  } catch (e) { return null; }
+}
+function fmt(x, d = 3) {
+  const p = 10 ** d, r = Math.round(x * p) / p;
+  return r === 0 ? '0' : String(r).replace('-', '−');
+}
+/* split a total into whole counts proportional to weights (largest remainder) */
+function apportion(weights, total) {
+  const raw = weights.map(w => w * total), base = raw.map(Math.floor);
+  let left = total - base.reduce((a, b) => a + b, 0);
+  const order = raw.map((r, i) => [r - base[i], i]).sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+  for (let k = 0; k < order.length && left > 0; k++, left--) base[order[k][1]]++;
+  return base;
+}
+function matVec(P, x) { return P.map(row => row.reduce((s, p, j) => s + p * x[j], 0)); }
+function steadyState(P) {
+  const n = P.length, M = P.map((row, i) => row.map((p, j) => p - (i === j ? 1 : 0)));
+  M[n - 1] = Array(n).fill(1);
+  const b = Array(n).fill(0); b[n - 1] = 1;
+  for (let c = 0; c < n; c++) {
+    let piv = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+    if (Math.abs(M[piv][c]) < 1e-10) return null;
+    [M[c], M[piv]] = [M[piv], M[c]]; [b[c], b[piv]] = [b[piv], b[c]];
+    for (let r = 0; r < n; r++) {
+      if (r === c) continue;
+      const f = M[r][c] / M[c][c];
+      if (!f) continue;
+      for (let k = c; k < n; k++) M[r][k] -= f * M[c][k];
+      b[r] -= f * b[c];
+    }
+  }
+  return b.map((v, i) => Math.max(0, v / M[i][i]));
+}
+
+/* ---------- geometry ---------- */
+let geo = null;
+function layout() {
+  const n = state.n, { L, R } = LAYOUT[n];
+  const raw = Array.from({ length: n }, (_, i) => {
+    const a = -Math.PI / 2 + 2 * Math.PI * i / n;
+    return { x: L * Math.cos(a), y: L * Math.sin(a), ux: Math.cos(a), uy: Math.sin(a) };
+  });
+  const pad = R + 70;
+  const xs = raw.map(p => p.x), ys = raw.map(p => p.y);
+  const cx = VB / 2 - (Math.min(...xs) + Math.max(...xs)) / 2, cy = VB / 2 - (Math.min(...ys) + Math.max(...ys)) / 2;
+  const nodes = raw.map(p => ({ x: p.x + cx, y: p.y + cy, ux: p.ux, uy: p.uy }));
+  geo = { nodes, R, c: (R - 8) / Math.sqrt(state.N), dot: state.N > 200 ? 1.8 : 3.4 };
+  geo.pad = pad;
+}
+const GOLD = Math.PI * (3 - Math.sqrt(5));
+function slot(node, k) {
+  const nd = geo.nodes[node], r = geo.c * Math.sqrt(k + 0.5), a = k * GOLD;
+  return [nd.x + r * Math.cos(a), nd.y + r * Math.sin(a)];
+}
+/* control point of the curved link from node j to node i */
+function ctrl(j, i) {
+  const a = geo.nodes[j], b = geo.nodes[i];
+  const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+  const k = 0.17 * d;
+  return [(a.x + b.x) / 2 + (dy / d) * k, (a.y + b.y) / 2 - (dx / d) * k];
+}
+const rot = (u, a) => [u[0] * Math.cos(a) - u[1] * Math.sin(a), u[0] * Math.sin(a) + u[1] * Math.cos(a)];
+const n2 = v => v.toFixed(1);
+
+/* ---------- static drawing ---------- */
+function arrowHead(x, y, tx, ty, w) {
+  const d = Math.hypot(tx, ty), ux = tx / d, uy = ty / d, h = 8 + w * 1.6, hw = 4.5 + w;
+  const bx = x - ux * h / 2, by = y - uy * h / 2, fx = x + ux * h / 2, fy = y + uy * h / 2;
+  return `<polygon class="ahead" points="${n2(fx)},${n2(fy)} ${n2(bx - uy * hw)},${n2(by + ux * hw)} ${n2(bx + uy * hw)},${n2(by - ux * hw)}"/>`;
+}
+function drawGraph() {
+  const P = state.P, n = state.n, R = geo.R;
+  let e = '', lbl = '';
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const p = P[i][j];
+      if (p <= 1e-12) continue;
+      const w = 1 + 5 * p;
+      if (i === j) {
+        const nd = geo.nodes[j], u = [nd.ux, nd.uy];
+        const a = rot(u, -0.42), b = rot(u, 0.42), ca = rot(u, -0.62), cb = rot(u, 0.62), L = R + 78;
+        const P0 = [nd.x + R * a[0], nd.y + R * a[1]], P3 = [nd.x + R * b[0], nd.y + R * b[1]];
+        const P1 = [nd.x + L * ca[0], nd.y + L * ca[1]], P2 = [nd.x + L * cb[0], nd.y + L * cb[1]];
+        e += `<path class="edge" stroke-width="${n2(w)}" d="M${n2(P0[0])},${n2(P0[1])} C${n2(P1[0])},${n2(P1[1])} ${n2(P2[0])},${n2(P2[1])} ${n2(P3[0])},${n2(P3[1])}"/>`;
+        const mx = (P0[0] + 3 * P1[0] + 3 * P2[0] + P3[0]) / 8, my = (P0[1] + 3 * P1[1] + 3 * P2[1] + P3[1]) / 8;
+        const tx = (P3[0] + P2[0] - P1[0] - P0[0]), ty = (P3[1] + P2[1] - P1[1] - P0[1]);
+        e += arrowHead(mx, my, tx, ty, w);
+        lbl += `<text class="wlbl" x="${n2(mx + u[0] * 16)}" y="${n2(my + u[1] * 16 + 4)}" text-anchor="middle">${fmt(p)}</text>`;
+      } else {
+        const a = geo.nodes[j], b = geo.nodes[i], c = ctrl(j, i);
+        e += `<path class="edge" stroke-width="${n2(w)}" d="M${n2(a.x)},${n2(a.y)} Q${n2(c[0])},${n2(c[1])} ${n2(b.x)},${n2(b.y)}"/>`;
+        const mx = (a.x + 2 * c[0] + b.x) / 4, my = (a.y + 2 * c[1] + b.y) / 4;
+        e += arrowHead(mx, my, b.x - a.x, b.y - a.y, w);
+        const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+        lbl += `<text class="wlbl" x="${n2(mx + (dy / d) * 16)}" y="${n2(my - (dx / d) * 16 + 4)}" text-anchor="middle">${fmt(p)}</text>`;
+      }
+    }
+  }
+  $('edges').innerHTML = e + lbl;
+  drawNodes();
+}
+function drawNodes() {
+  const n = state.n, R = geo.R, counts = countsNow();
+  let out = '', lbl = '';
+  for (let i = 0; i < n; i++) {
+    const nd = geo.nodes[i], col = `var(--n${i + 1})`;
+    out += `<circle class="disk" cx="${n2(nd.x)}" cy="${n2(nd.y)}" r="${R}" style="fill: color-mix(in srgb, ${col} 9%, var(--panel)); stroke: ${col}"/>`;
+    if (state.showSteady && state.steady) {
+      const r = geo.c * Math.sqrt(state.steady[i] * state.N) + geo.dot + 1;
+      if (r > geo.dot + 2) out += `<circle class="steady" cx="${n2(nd.x)}" cy="${n2(nd.y)}" r="${n2(r)}"/>`;
+    }
+    const u = rot([nd.ux, nd.uy], 0.95), d = R + 16;
+    const lx = nd.x + u[0] * d, ly = nd.y + u[1] * d;
+    const anchor = u[0] > 0.25 ? 'start' : u[0] < -0.25 ? 'end' : 'middle';
+    const dy = u[1] > 0.3 ? 14 : u[1] < -0.3 ? -12 : 2;
+    lbl += `<text class="nname" style="fill: ${col}" x="${n2(lx)}" y="${n2(ly + dy - 8)}" text-anchor="${anchor}">Node ${i + 1}</text>`;
+    lbl += `<text class="ncount" x="${n2(lx)}" y="${n2(ly + dy + 9)}" text-anchor="${anchor}">${counts[i]} surfer${counts[i] === 1 ? '' : 's'}</text>`;
+  }
+  $('nodes').innerHTML = out;
+  $('labels').innerHTML = lbl;
+}
+
+/* ---------- surfers ---------- */
+let pos = null;          /* Float32Array of current dot positions, 2 per surfer */
+function cur() { return state.hist[state.t]; }
+function countsNow() {
+  const c = Array(state.n).fill(0), a = state.hist[state.t];
+  if (a) for (const v of a) c[v]++;
+  return c;
+}
+function rebuildOrder(prevAssign, nextAssign) {
+  /* stayers keep their relative order at the centre, arrivals fill in after them */
+  const order = Array.from({ length: state.n }, () => []);
+  if (prevAssign && state.order) {
+    for (let i = 0; i < state.n; i++) for (const s of state.order[i]) if (nextAssign[s] === i) order[i].push(s);
+    for (let i = 0; i < state.n; i++) for (const s of state.order[i]) if (nextAssign[s] !== i) order[nextAssign[s]].push(s);
+  } else {
+    nextAssign.forEach((v, s) => order[v].push(s));
+  }
+  return order;
+}
+function slotsFor(order) {
+  const p = new Float32Array(state.N * 2);
+  order.forEach((list, i) => list.forEach((s, k) => { const q = slot(i, k); p[2 * s] = q[0]; p[2 * s + 1] = q[1]; }));
+  return p;
+}
+function initSurfers() {
+  const counts = apportion(state.x0, state.N);
+  const a = new Int8Array(state.N);
+  let s = 0;
+  counts.forEach((c, i) => { for (let k = 0; k < c; k++) a[s++] = i; });
+  state.groups = a.slice();
+  state.hist = [a];
+  state.t = 0;
+  state.order = rebuildOrder(null, a);
+  pos = slotsFor(state.order);
+}
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr;
+}
+function nextAssignment(a) {
+  const n = state.n, P = state.P, out = new Int8Array(a.length);
+  if (state.mode === 'random') {
+    a.forEach((j, s) => {
+      let r = Math.random(), i = 0;
+      while (i < n - 1 && r >= P[i][j]) { r -= P[i][j]; i++; }
+      while (P[i][j] <= 0 && i > 0) i--;
+      out[s] = i;
+    });
+  } else {
+    for (let j = 0; j < n; j++) {
+      const members = shuffle([...a.keys()].filter(s => a[s] === j));
+      const send = apportion(P.map(row => row[j]), members.length);
+      let k = 0;
+      send.forEach((m, i) => { for (let q = 0; q < m; q++) out[members[k++]] = i; });
+    }
+  }
+  return out;
+}
+
+/* ---------- canvas ---------- */
+const cv = $('cv'), ctx = cv.getContext('2d');
+let scale = 1;
+function sizeCanvas() {
+  const r = $('graph').getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  cv.width = Math.max(1, Math.round(r.width * dpr)); cv.height = Math.max(1, Math.round(r.height * dpr));
+  scale = cv.width / VB;
+  paint(pos);
+}
+function paint(p) {
+  if (!p) return;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  const cs = getComputedStyle(document.documentElement);
+  const cols = Array.from({ length: state.n }, (_, i) => cs.getPropertyValue('--n' + (i + 1)).trim());
+  const r = geo.dot * scale;
+  for (let g = 0; g < state.n; g++) {
+    ctx.beginPath();
+    for (let s = 0; s < state.N; s++) {
+      if (state.groups[s] !== g) continue;
+      const x = p[2 * s] * scale, y = p[2 * s + 1] * scale;
+      ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, Math.PI * 2);
+    }
+    ctx.fillStyle = cols[g];
+    ctx.fill();
+  }
+}
+new ResizeObserver(sizeCanvas).observe($('graph'));
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => paint(pos));
+new MutationObserver(() => paint(pos)).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+/* ---------- readout ---------- */
+function exactDist(t) {
+  let x = state.x0.slice();
+  for (let k = 0; k < t; k++) x = matVec(state.P, x);
+  return x;
+}
+function renderTable() {
+  const counts = countsNow(), x = exactDist(state.t);
+  document.querySelectorAll('.stcol').forEach(el => { el.hidden = !state.showSteady; });
+  $('rows').innerHTML = counts.map((c, i) => `<tr><th scope="row"><span class="sw" style="background: var(--n${i + 1})"></span>Node ${i + 1}</th>` +
+    `<td>${c}</td><td>${fmt(c / state.N, 2)}</td><td>${fmt(x[i])}</td>` +
+    `<td class="stcol"${state.showSteady ? '' : ' hidden'}>${state.steady ? fmt(state.steady[i]) : '—'}</td></tr>`).join('');
+  let note = '';
+  if (state.showSteady) {
+    note = state.steady
+      ? 'The steady state q solves Pq = q with entries adding to 1. It is the eigenvector of P for λ = 1. The dashed rings show how big each cluster would be there.'
+      : 'This chain has no single steady state: Pq = q has more than one solution with entries adding to 1.';
+  }
+  $('stNote').textContent = note;
+}
+function setStatus(moving) {
+  let s;
+  if (!state.valid) s = 'Finish or fix the entries on the right to continue.';
+  else if (moving) s = state.mode === 'exact'
+    ? `Step ${state.t} → ${state.t + 1}: from each node j, a fraction Pᵢⱼ of its surfers go to node i.`
+    : `Step ${state.t} → ${state.t + 1}: each surfer at node j picks node i with probability Pᵢⱼ.`;
+  else {
+    const c = countsNow();
+    s = `t = ${state.t}: ` + c.map((v, i) => `${v} at node ${i + 1}`).join(', ') + '.';
+  }
+  $('status').textContent = s;
+}
+function describe() {
+  const parts = [];
+  for (let j = 0; j < state.n; j++) for (let i = 0; i < state.n; i++) {
+    const p = state.P[i][j];
+    if (p > 0) parts.push(i === j ? `node ${j + 1} to itself ${fmt(p)}` : `node ${j + 1} to node ${i + 1} ${fmt(p)}`);
+  }
+  const c = countsNow();
+  $('svg').setAttribute('aria-label', `Graph of a Markov chain with ${state.n} nodes. Links: ${parts.join(', ')}. At t = ${state.t}: ` +
+    c.map((v, i) => `${v} surfers at node ${i + 1}`).join(', ') + '.');
+}
+function syncControls() {
+  const busy = !!anim;
+  $('tOut').textContent = state.t;
+  $('step').disabled = busy || !state.valid;
+  $('play').disabled = !state.valid;
+  $('back').disabled = busy || state.t === 0;
+  $('reset').disabled = busy || state.t === 0;
+  document.querySelectorAll('[data-n]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === state.N)));
+  document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
+  document.querySelectorAll('[data-speed]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.speed === state.speed)));
+  document.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.size === state.n)));
+  document.querySelectorAll('[data-preset]').forEach(b => {
+    const p = PRESETS[+b.dataset.preset];
+    b.setAttribute('aria-pressed', String(JSON.stringify(p[1]) === JSON.stringify(state.raw) && p[2].join() === state.rawX.join()));
+  });
+}
+function refreshIdle() { drawNodes(); paint(pos); renderTable(); setStatus(false); syncControls(); describe(); }
+function say(m) { $('live').textContent = m; }
+
+/* ---------- inputs ---------- */
+function buildInputs() {
+  const n = state.n;
+  const mat = $('mat'), xb = $('xBox');
+  const cols = `auto repeat(${n}, minmax(48px, ${n > 3 ? 56 : 66}px))`;
+  mat.style.gridTemplateColumns = cols; xb.style.gridTemplateColumns = cols;
+  let h = '<span></span>';
+  for (let j = 0; j < n; j++) h += `<span class="hd">from <span class="sw" style="background: var(--n${j + 1})"></span>${j + 1}</span>`;
+  for (let i = 0; i < n; i++) {
+    h += `<span class="rh">to <span class="sw" style="background: var(--n${i + 1})"></span>${i + 1}</span>`;
+    for (let j = 0; j < n; j++) h += `<input id="p${i}${j}" aria-label="Probability from node ${j + 1} to node ${i + 1}" autocomplete="off" spellcheck="false" value="${state.raw[i][j]}">`;
+  }
+  h += '<span class="rh">sum</span>';
+  for (let j = 0; j < n; j++) h += `<span class="sum" id="sum${j}"></span>`;
+  mat.innerHTML = h;
+  let x = '<span class="rh">x₀</span>';
+  for (let i = 0; i < n; i++) x += `<input id="x${i}" aria-label="Starting share at node ${i + 1}" autocomplete="off" spellcheck="false" value="${state.rawX[i]}">`;
+  x += '<span class="rh">sum</span><span class="sum" id="xsum" style="grid-column: span ' + n + '; text-align: left"></span>';
+  xb.innerHTML = x;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+    const el = $('p' + i + j);
+    el.addEventListener('input', () => { state.raw[i][j] = el.value; validate(true, false); });
+    el.addEventListener('change', () => validate(false, true));
+    el.addEventListener('focus', () => el.select());
+  }
+  for (let i = 0; i < n; i++) {
+    const el = $('x' + i);
+    el.addEventListener('input', () => { state.rawX[i] = el.value; validate(true, false); });
+    el.addEventListener('change', () => validate(false, true));
+    el.addEventListener('focus', () => el.select());
+  }
+}
+/* showErrors is false while a field is being typed in, so half-typed entries such as "1/" or ""
+   do not flash an error; the error appears when the field loses focus. */
+function validate(resetRun, showErrors) {
+  const n = state.n;
+  const P = state.raw.map(r => r.map(parseExpr));
+  const w = state.rawX.map(parseExpr);
+  let mErr = '', xErr = '';
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+    const v = P[i][j], bad = v === null || v < 0 || v > 1;
+    $('p' + i + j).setAttribute('aria-invalid', String(bad && showErrors));
+    if (bad && !mErr) mErr = 'Each entry must be a number between 0 and 1, such as 0.25 or 1/3.';
+  }
+  for (let j = 0; j < n; j++) {
+    const sum = P.reduce((a, r) => a + (r[j] ?? NaN), 0), el = $('sum' + j);
+    el.textContent = Number.isFinite(sum) ? fmt(sum) : '?';
+    const bad = !(Math.abs(sum - 1) <= 1e-6);
+    el.classList.toggle('bad', bad && Number.isFinite(sum));
+    if (bad && !mErr && Number.isFinite(sum)) mErr = `Column ${j + 1} (from node ${j + 1}) adds up to ${fmt(sum)}. Each column must add up to 1.`;
+  }
+  for (let i = 0; i < n; i++) {
+    const v = w[i], bad = v === null || v < 0;
+    $('x' + i).setAttribute('aria-invalid', String(bad && showErrors));
+    if (bad && !xErr) xErr = 'Each share must be a number that is 0 or more, such as 0.25, 1/3 or 40%.';
+  }
+  const ws = w.reduce((a, b) => a + (b ?? NaN), 0);
+  if (!xErr && !(ws > 0)) xErr = 'At least one share must be more than 0.';
+  $('xsum').textContent = Number.isFinite(ws) ? fmt(ws) : '?';
+  let xNote = '';
+  if (!xErr && Math.abs(ws - 1) > 1e-6) {
+    xNote = `These add up to ${fmt(ws)}, so they are scaled to add up to 1: x₀ = (${w.map(v => fmt(v / ws)).join(', ')}).`;
+  }
+  $('xNote').textContent = xNote;
+  $('matErr').textContent = showErrors ? mErr : '';
+  $('xErr').textContent = showErrors ? xErr : '';
+  state.valid = !mErr && !xErr;
+  if (!state.valid) { stopPlay(); cancelAnim(); setStatus(false); syncControls(); return; }
+  state.P = P; state.x0 = w.map(v => v / ws);
+  state.steady = steadyState(P);
+  if (resetRun) startRun();
+}
+function startRun() {
+  stopPlay(); cancelAnim();
+  layout();
+  initSurfers();
+  drawGraph();
+  refreshIdle();
+}
+
+/* ---------- animation ---------- */
+let anim = null, playing = false, nextTimer = null;
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function stepOnce() {
+  if (anim || !state.valid) return;
+  const a = cur(), b = nextAssignment(a);
+  const order = rebuildOrder(a, b), target = slotsFor(order);
+  const from = pos.slice();
+  const N = state.N, ctrlPts = new Float32Array(N * 2), delay = new Float32Array(N), moved = new Uint8Array(N);
+  for (let s = 0; s < N; s++) {
+    delay[s] = Math.random() * 0.3;
+    if (a[s] !== b[s]) {
+      const c = ctrl(a[s], b[s]);
+      ctrlPts[2 * s] = c[0] + (Math.random() - 0.5) * 34; ctrlPts[2 * s + 1] = c[1] + (Math.random() - 0.5) * 34;
+      moved[s] = 1;
+    }
+  }
+  const finish = () => {
+    state.hist = state.hist.slice(0, state.t + 1);
+    state.hist.push(b); state.t++;
+    state.order = order; pos = target;
+    anim = null;
+    refreshIdle();
+    say(`t = ${state.t}. ` + countsNow().map((v, i) => `${v} at node ${i + 1}`).join(', ') + '.');
+    if (playing) nextTimer = setTimeout(stepOnce, REDUCED ? 600 : SPEEDS[state.speed].gap);
+  };
+  anim = { raf: 0 };
+  syncControls(); setStatus(true);
+  const dur = REDUCED ? 0 : SPEEDS[state.speed].move;
+  if (!dur) { finish(); return; }
+  const t0 = performance.now(), p = new Float32Array(N * 2);
+  const tick = now => {
+    if (!anim) return;
+    const T = Math.min(1, (now - t0) / dur);
+    for (let s = 0; s < N; s++) {
+      const u = ease(Math.min(1, Math.max(0, (T - delay[s]) / 0.7)));
+      const x0 = from[2 * s], y0 = from[2 * s + 1], x1 = target[2 * s], y1 = target[2 * s + 1];
+      if (moved[s]) {
+        const cx = ctrlPts[2 * s], cy = ctrlPts[2 * s + 1], v = 1 - u;
+        p[2 * s] = v * v * x0 + 2 * v * u * cx + u * u * x1;
+        p[2 * s + 1] = v * v * y0 + 2 * v * u * cy + u * u * y1;
+      } else {
+        p[2 * s] = x0 + (x1 - x0) * u; p[2 * s + 1] = y0 + (y1 - y0) * u;
+      }
+    }
+    paint(p);
+    if (T < 1) anim.raf = requestAnimationFrame(tick);
+    else finish();
+  };
+  anim.raf = requestAnimationFrame(tick);
+}
+function cancelAnim() { if (anim) { cancelAnimationFrame(anim.raf); anim = null; } clearTimeout(nextTimer); }
+function stopPlay() { playing = false; clearTimeout(nextTimer); $('play').textContent = 'Play'; $('play').setAttribute('aria-pressed', 'false'); }
+
+$('step').addEventListener('click', () => { stopPlay(); stepOnce(); });
+$('play').addEventListener('click', () => {
+  if (playing) { stopPlay(); return; }
+  playing = true; $('play').textContent = 'Pause'; $('play').setAttribute('aria-pressed', 'true');
+  stepOnce();
+});
+$('back').addEventListener('click', () => {
+  stopPlay(); cancelAnim();
+  if (state.t === 0) return;
+  state.t--;
+  state.order = rebuildOrder(null, cur());
+  pos = slotsFor(state.order);
+  refreshIdle();
+});
+$('reset').addEventListener('click', () => { startRun(); say('Back to the starting distribution.'); });
+document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => { state.N = +b.dataset.n; if (state.valid) startRun(); else syncControls(); }));
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { state.mode = b.dataset.mode; syncControls(); setStatus(!!anim); }));
+document.querySelectorAll('[data-speed]').forEach(b => b.addEventListener('click', () => { state.speed = +b.dataset.speed; syncControls(); }));
+$('steadyToggle').addEventListener('click', e => {
+  state.showSteady = !state.showSteady;
+  e.currentTarget.setAttribute('aria-pressed', String(state.showSteady));
+  if (state.valid) { drawNodes(); renderTable(); }
+  say(state.showSteady ? (state.steady ? 'Steady state: ' + state.steady.map((q, i) => `node ${i + 1} ${fmt(q)}`).join(', ') + '.' : 'No single steady state.') : 'Steady state hidden.');
+});
+
+/* sizes and presets */
+for (let n = 2; n <= 5; n++) {
+  const b = document.createElement('button');
+  b.className = 'btn'; b.type = 'button'; b.dataset.size = n; b.textContent = n;
+  b.setAttribute('aria-label', `${n} nodes`);
+  b.addEventListener('click', () => {
+    if (n === state.n) return;
+    state.n = n;
+    state.raw = Array.from({ length: n }, () => Array(n).fill('1/' + n));
+    state.rawX = Array(n).fill('1/' + n);
+    buildInputs(); validate(true, true);
+  });
+  $('sizes').appendChild(b);
+}
+PRESETS.forEach((p, k) => {
+  const b = document.createElement('button');
+  b.className = 'btn'; b.type = 'button'; b.dataset.preset = k; b.textContent = p[0];
+  b.addEventListener('click', () => {
+    state.n = p[1].length; state.raw = p[1].map(r => r.slice()); state.rawX = p[2].slice();
+    buildInputs(); validate(true, true);
+  });
+  $('presets').appendChild(b);
+});
+
+/* ---------- start ---------- */
+function start(saved) {
+  if (saved && saved.layout === 1) Object.assign(state, { n: saved.n, raw: saved.raw, rawX: saved.rawX, N: saved.N, mode: saved.mode, speed: saved.speed, showSteady: saved.showSteady });
+  $('steadyToggle').setAttribute('aria-pressed', String(state.showSteady));
+  buildInputs();
+  validate(true, true);
+  sizeCanvas();
+}
+window.claude?.hot?.snapshot?.(() => ({ layout: 1, n: state.n, raw: state.raw, rawX: state.rawX, N: state.N, mode: state.mode, speed: state.speed, showSteady: state.showSteady }));
+if (window.claude?.hot?.ready) window.claude.hot.ready(start);
+else start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
